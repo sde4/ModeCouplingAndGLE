@@ -8,7 +8,7 @@
 
 #include "struct_def.h"
 
-void	SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc)
+void	SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc, gsl_rng * gr)
 {
   printf("\n# 2. System Initialization ...\n");
 
@@ -25,20 +25,15 @@ void	SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc)
     }
   }
 
-  int     mord, nord;
-  double  N, lamh, fr;
+  int     mord, nord, pord, qord;
+  double  N, Nj, lamh, fr;
   double  gam;
   double  m;
+  double  alpha;
   double  sig;
   double  sigma, q, qdot, teng;
   FILE    *outfp;
   char    outfname[40];
-
-  const gsl_rng_type * gT;
-  gsl_rng * gr;
-  gsl_rng_env_setup();
-  gT    = gsl_rng_default;
-  gr    = gsl_rng_alloc(gT);
 
   for (i=0; i<r.nmodes; i++)
   {
@@ -67,7 +62,10 @@ void	SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc)
     /**************************/    
     for (j=0; j<r.nmodes; j++)
     {
-      gsl_matrix_set(s->alphamat, i, j, 0);
+      pord      = gsl_matrix_get(s->modindmat, j, 0);
+      qord      = gsl_matrix_get(s->modindmat, j, 1);
+      alpha 	= 2.0*pow(PI, 4.0)*mc.Et*(mord*mord*pord*pord + nord*nord*qord*qord)/(64*sc.L*sc.L);
+      gsl_matrix_set(s->alphamat, i, j, alpha);
     }
 
 
@@ -75,7 +73,7 @@ void	SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc)
     /**************************/
     // friction calculation !!
     /**************************/    
-    gam       = pow(PI, 4.0)*kB*sv.T*mc.DEt*( 9.0*pow(mord, 4.0) + 9.0*pow(nord, 4.0) + 2.0*pow(mord, 2.0)*pow(nord, 2.0))/(128.0*pow(sc.L, 2.0)*pow(m, 2.0)*pow(2*PI*fr, 3.0));
+    gam       = 1E3*pow(PI, 4.0)*kB*sv.T*mc.DEt*( 9.0*pow(mord, 4.0) + 9.0*pow(nord, 4.0) + 2.0*pow(mord, 2.0)*pow(nord, 2.0))/(128.0*pow(sc.L, 2.0)*pow(m, 2.0)*pow(2*PI*fr, 3.0));
     gsl_vector_set(s->gamvec, i, gam);
 
 
@@ -99,31 +97,89 @@ void	SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc)
     sigma     = pow(kB*sv.T/m, 0.5);
     qdot      = gsl_ran_gaussian(gr, sigma);
     gsl_vector_set(s->qdotvec, i, qdot);
+  }
+
+  /**************************/
+  // Writing in a file !!
+  /**************************/
+  
+  
+  // frequency file !!
+  outfp = fopen("frvec.dat", "w");
+  for (i=0; i<r.nmodes-1; i++)
+  {
+    fprintf(outfp, "%5.5e\n", gsl_vector_get(s->frvec, i));
+  }
+  fprintf(outfp, "%5.5e", gsl_vector_get(s->frvec, i));
+  fclose(outfp);
+
+  // mass file !!
+  outfp = fopen("mvec.dat", "w");
+  for (i=0; i<r.nmodes-1; i++)
+  {
+    fprintf(outfp, "%5.5e\n", gsl_vector_get(s->mvec, i));
+  }
+  fprintf(outfp, "%5.5e", gsl_vector_get(s->mvec, i));
+  fclose(outfp);
+
+  // coupling file !!
+  outfp = fopen("coupmat.dat", "w");
+  for (i=0; i<r.nmodes-1; i++)
+  {
+    for (j=0; j<r.nmodes-1; j++)
+    {
+      fprintf(outfp, "%5.5e\t", gsl_matrix_get(s->alphamat, i, j));
+    }
+    fprintf(outfp, "%5.5e\n", gsl_matrix_get(s->alphamat, i, j));
+  }
+  for (j=0; j<r.nmodes-1; j++)
+  {
+    fprintf(outfp, "%5.5e\t", gsl_matrix_get(s->alphamat, i, j));
+  }
+  fprintf(outfp, "%5.5e\n", gsl_matrix_get(s->alphamat, i, j));
+  fclose(outfp);
+
+  // friction file !!
+  outfp = fopen("gamvec.dat", "w");
+  for (i=0; i<r.nmodes-1; i++)
+  {
+    fprintf(outfp, "%5.5e\n", gsl_vector_get(s->gamvec, i));
+  }
+  fprintf(outfp, "%5.5e", gsl_vector_get(s->gamvec, i));
+  fclose(outfp);
+
+  // noise file !!
+  outfp = fopen("noisevec.dat", "w");
+  for (i=0; i<r.nmodes-1; i++)
+  {
+    fprintf(outfp, "%5.5e\n", gsl_vector_get(s->sigvec, i));
+  }
+  fprintf(outfp, "%5.5e", gsl_vector_get(s->sigvec, i));
+  fclose(outfp);
 
 
-    /**************************/
-    // Writing in a file !!
-    /**************************/
-    sprintf(outfname, "modedisp.%04d.txt", i);
+  // displacement and velocity files !!
+  for (i=0; i<9; i++)
+  {
+    sprintf(outfname, "modedisp.%04d.txt", i+1);
     outfp = fopen(outfname, "a");
     fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qvec, i));
     fclose(outfp);
 
-    sprintf(outfname, "modevelc.%04d.txt", i);
+    sprintf(outfname, "modevelc.%04d.txt", i+1);
     outfp = fopen(outfname, "a");
     fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qdotvec, i));
     fclose(outfp);
 
+    m         = gsl_vector_get(s->mvec, i);
+    fr        = gsl_vector_get(s->frvec, i);
     teng      = 0.5*m*gsl_vector_get(s->qdotvec, i)*gsl_vector_get(s->qdotvec, i) +
     0.5*m*pow(2*PI*fr, 2.0)*gsl_vector_get(s->qvec, i)*gsl_vector_get(s->qvec, i);
 
-    sprintf(outfname, "modeteng.%04d.txt", i);
+    sprintf(outfname, "modeteng.%04d.txt", i+1);
     outfp = fopen(outfname, "a");
     fprintf(outfp, "%5.5e\n", teng);
     fclose(outfp);
-
-
   }
-  gsl_rng_free(gr);
   return;
 }

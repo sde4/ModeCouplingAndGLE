@@ -1,8 +1,10 @@
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_randist.h>
 #include "struct_def.h"
 
 /* Definitions for routines */
-void SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc);
-void IntegrateSys(sys_var *s, run_param r);
+void SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc, gsl_rng * gr);
+void IntegrateSys(sys_var *s, run_param r, gsl_rng * gr);
 
 int 	main(int argc, char* argv[])
 {
@@ -35,8 +37,8 @@ int 	main(int argc, char* argv[])
   int run_id    = atoi(argv[3]);
 */  
 
-  sc.mmax             = 3;
-  sc.nmax             = 3;
+  sc.mmax             = 10;
+  sc.nmax             = 10;
   sc.L                = 5E4;
   sc.run_id           = 1;
 
@@ -52,7 +54,7 @@ int 	main(int argc, char* argv[])
   // Run Parameters !!
   r.dt                = 0.001;                                // ns
   r.runtime           = 2E6;                                  // ns
-  r.nfreq             = 100;
+  r.nfreq             = 1000;
   r.nmodes            = sc.mmax*sc.nmax;   
 
   printf("# No. of modes: %d  Run id: %d \n", r.nmodes, sc.run_id);
@@ -67,21 +69,30 @@ int 	main(int argc, char* argv[])
   s.qdotvec           = gsl_vector_alloc(r.nmodes);
 
   s.sigvec            = gsl_vector_alloc(r.nmodes);
- 
+
+
+  // Random number initialization
+  const gsl_rng_type * gT;
+  gsl_rng * gr;
+  gsl_rng_env_setup();
+  gT    = gsl_rng_default;
+  gr    = gsl_rng_alloc(gT);
+
   // System Initialization
-  SysInit(&s, r, mc, sv, sc);
+  SysInit(&s, r, mc, sv, sc, gr);
 
   // Integrate
   int     i;
   r.nsteps            = (int) r.runtime/r.dt;
 
-  printf("\n# 2. Integration started ...\n");
+  printf("\n# 3. Integration started ...\n");
   for (i=1; i<=r.nsteps; i++)
   {
     r.step = i;
 
-    IntegrateSys(&s, r);
+    IntegrateSys(&s, r, gr);
 
   }
+  gsl_rng_free(gr);
 }
 
