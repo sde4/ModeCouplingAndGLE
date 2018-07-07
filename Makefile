@@ -22,7 +22,7 @@ GSL_LIB  	= -L/usr/local/gsl/2.4/lib
 FFT_INC		= -I/home/sde4/Programs/packages/fftw-3.3.1/include
 GSL_INC  	= -I/usr/local/gsl/2.4/include
 
-SRC		= main_ModeCouplingAndGLE.c SysInit.c IntegrateSys.c ForceSys.c
+SRC		= main_ModeCouplingAndGLE.c SysInit.c IntegrateSys.c ForceSys.c array_def.c
 
 OBJ		= $(SRC:.c=.o)
 
@@ -35,10 +35,10 @@ $(EXEC1): $(OBJ)
 	$(CC) $(FFT_LIB) $(GSL_LIB) $(OBJ) $(LIBS) -o $(EXEC1)
 
 $(EXEC2): $(OBJ)
-	$(CC) $(FFT_LIB) $(GSL_LIB) $(OBJ) $(LIBS) $(OMP)  -o $(EXEC2)
+	$(CC) $(OMP) $(FFT_LIB) $(GSL_LIB) $(OBJ) $(LIBS)  -o $(EXEC2)
 
 %.o:%.c
-	$(CC) $(CFLAGS)  $(GSL_INC) $(FFT_INC) -c $<
+	$(CC) $(OMP) $(CFLAGS)  $(GSL_INC) $(FFT_INC) -c $<
 clean:
 	rm -rf $(EXEC1) $(EXEC2)  *~ *.o core
 
