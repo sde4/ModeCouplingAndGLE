@@ -15,13 +15,13 @@ int 	main(int argc, char* argv[])
   printf("# Description: This program implements GLE and modecoupling for squar \n");
   printf("# e grahene resonators \n\n");
 
-  //printf("# Phonon analyzer started ...\n\n");
+  printf("# Langevin dynamics simulator for coupled modes started ...\n\n");
   
-  // if (argc!=4) 
-  // {
-  //  printf("ERROR: specify three arguments: 1. nmodes 2. run_id \n");
-  //  exit(1);
-  // }
+  if (argc!=6) 
+  {
+   printf("ERROR: specify four arguments: 1. mmax 2. nmax 3. gam 4. alpha 5. seed \n");
+   exit(1);
+  }
 
   printf("# 1. Main started ...\n");
   run_param r;
@@ -29,6 +29,7 @@ int 	main(int argc, char* argv[])
   mat_const mc;
   state_var sv;
   sys_const sc;
+  int seed 	      = atoi(argv[5]); 
 
   // system constants !!
 
@@ -37,8 +38,8 @@ int 	main(int argc, char* argv[])
   int run_id    = atoi(argv[3]);
 */  
 
-  sc.mmax             = 10;
-  sc.nmax             = 10;
+  sc.mmax             = atoi(argv[1]);
+  sc.nmax             = atoi(argv[2]);
   sc.L                = 5E4;
   sc.run_id           = 1;
 
@@ -46,6 +47,8 @@ int 	main(int argc, char* argv[])
   mc.Et               = 340*Npm_eVpA2;                        // eV/A^2
   mc.DEt              = 40*Npm_eVpA2;                         // eV/A^2
   mc.rho              = 7.4E-7*kgpm2_amupA2*amuA2pns2_eV;     // eV/(A^4/ns^2)
+  mc.gam 	      = atof(argv[3]);			      // 1/ns
+  mc.alpha            = atof(argv[4]);
 
   // State variables !!
   sv.T                = 300;                                  // K
@@ -57,7 +60,7 @@ int 	main(int argc, char* argv[])
   r.nfreq             = 1000;
   r.nmodes            = sc.mmax*sc.nmax;   
 
-  printf("# No. of modes: %d  Run id: %d \n", r.nmodes, sc.run_id);
+  printf("# No. of modes: %d  gam: %f alpha: %f seed: %d \n", r.nmodes, mc.gam, mc.alpha, seed);
 
   /* System initialization */
   s.modindmat         = gsl_matrix_alloc(r.nmodes, 2);
