@@ -38,6 +38,8 @@ typedef struct {
   double        Et;                           // eV/A^2
   double        DEt;                          // eV/A^2
   double        rho;                          // eV/(A^4/ns^2)
+  double        gam;                          // 1/ns
+  double        alpha;                        
   }             mat_const;
 
 typedef struct {
