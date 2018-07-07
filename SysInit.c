@@ -64,7 +64,7 @@ void	SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     {
       pord      = gsl_matrix_get(s->modindmat, j, 0);
       qord      = gsl_matrix_get(s->modindmat, j, 1);
-      alpha 	= 2.0*pow(PI, 4.0)*mc.Et*(mord*mord*pord*pord + nord*nord*qord*qord)/(64*sc.L*sc.L);
+      alpha 	= mc.alpha; //2.0*pow(PI, 4.0)*mc.Et*(mord*mord*pord*pord + nord*nord*qord*qord)/(64*sc.L*sc.L);
       gsl_matrix_set(s->alphamat, i, j, alpha);
     }
 
@@ -73,7 +73,7 @@ void	SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     /**************************/
     // friction calculation !!
     /**************************/    
-    gam       = 1E3*pow(PI, 4.0)*kB*sv.T*mc.DEt*( 9.0*pow(mord, 4.0) + 9.0*pow(nord, 4.0) + 2.0*pow(mord, 2.0)*pow(nord, 2.0))/(128.0*pow(sc.L, 2.0)*pow(m, 2.0)*pow(2*PI*fr, 3.0));
+    gam       = mc.gam; //1E3*pow(PI, 4.0)*kB*sv.T*mc.DEt*( 9.0*pow(mord, 4.0) + 9.0*pow(nord, 4.0) + 2.0*pow(mord, 2.0)*pow(nord, 2.0))/(128.0*pow(sc.L, 2.0)*pow(m, 2.0)*pow(2*PI*fr, 3.0));
     gsl_vector_set(s->gamvec, i, gam);
 
 
