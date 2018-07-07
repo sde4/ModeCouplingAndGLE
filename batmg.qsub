@@ -1,0 +1,14 @@
+## Sample batch script for openmp C executable submission
+#PBS	-q	aluru #secondary
+#PBS	-l	nodes=1:ppn=2
+#PBS	-l	walltime=24:00:00
+##PBS	-A	aluru
+#PBS 	-j 	oe
+#PBS 	-o 	out.mcgle
+#PBS 	-N 	mcgle
+
+
+
+cd ${PBS_O_WORKDIR}
+##export OMP_NUM_THREADS=10
+./mcgle.serial
