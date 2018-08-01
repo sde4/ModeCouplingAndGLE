@@ -43,16 +43,14 @@ void	SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     /**************************/
     // frequency calculation !!
     /**************************/
-    N         = pow( (mord*mord+nord*nord)/2.0, 0.5);
-    lamh      = sc.L/N;
-    fr        = 1/lamh*pow(mc.Et*sv.e_pre/(2*mc.rho), 0.5); 
+    fr        = 1/(2*PI)*pow(pow(mord*PI/sc.Lx, 2.0)+pow(mord*PI/sc.Ly, 2.0), 0.5)*pow(2*mc.Et*sv.e_pre/(mc.rho), 0.5); 
     gsl_vector_set(s->frvec, i, fr);
 
 
     /**************************/
     // mass calculation !!
     /**************************/    
-    m         = mc.rho*sc.L*sc.L;
+    m         = mc.rho*sc.Lx*sc.Ly;
     gsl_vector_set(s->mvec, i, m);
     
 
@@ -98,6 +96,12 @@ void	SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     qdot      = gsl_ran_gaussian(gr, sigma);
     gsl_vector_set(s->qdotvec, i, qdot);
   }
+  // Initial perturbation of 20 KBT to mode 1
+  gsl_vector_set(s->gamvec, 0, 0.0);
+  gsl_vector_set(s->sigvec, 0, 0.0);
+  gsl_vector_set(s->qvec, 0, 0.0);
+  gsl_vector_set(s->qdotvec, 0, pow(20*kB*sv.T/m, 0.5));
+
 
   /**************************/
   // Writing in a file !!

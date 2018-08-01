@@ -50,7 +50,8 @@ typedef struct {
 typedef struct {
   int           mmax;
   int           nmax;
-  double        L;
+  double        Lx;
+  double        Ly;
   int           run_id;
   }             sys_const;
 

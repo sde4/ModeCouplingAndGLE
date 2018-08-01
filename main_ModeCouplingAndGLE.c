@@ -40,7 +40,8 @@ int 	main(int argc, char* argv[])
 
   sc.mmax             = atoi(argv[1]);
   sc.nmax             = atoi(argv[2]);
-  sc.L                = 5E4;
+  sc.Lx               = 4E4;
+  sc.Ly               = 6E4;
   sc.run_id           = 1;
 
   // Material constants !!
