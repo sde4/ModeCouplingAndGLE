@@ -43,7 +43,7 @@ void	SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     /**************************/
     // frequency calculation !!
     /**************************/
-    fr        = 1/(2*PI)*pow(pow(mord*PI/sc.Lx, 2.0)+pow(mord*PI/sc.Ly, 2.0), 0.5)*pow(2*mc.Et*sv.e_pre/(mc.rho), 0.5); 
+    fr        = 1/(2*PI)*pow(pow(mord*PI/sc.Lx, 2.0)+pow(nord*PI/sc.Ly, 2.0), 0.5)*pow(2*mc.Et*sv.e_pre/(mc.rho), 0.5); 
     gsl_vector_set(s->frvec, i, fr);
 
 
