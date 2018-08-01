@@ -14,9 +14,9 @@ void	SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc, 
 
   int i, j, k, cou1, cou2;
   cou1=0;
-  for (i=0; i<sc.nmax; i++)
+  for (j=0; j<sc.nmax; j++)
   {
-    for (j=0; j<sc.mmax; j++)
+    for (i=0; i<sc.mmax; i++)
     {
       gsl_matrix_set(s->modindmat, cou1, 0, i+1);
       gsl_matrix_set(s->modindmat, cou1, 1, j+1);
