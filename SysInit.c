@@ -163,7 +163,7 @@ void	SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc, 
 
 
   // displacement and velocity files !!
-  for (i=0; i<9; i++)
+  for (i=0; i<r.nmodes; i++)
   {
     sprintf(outfname, "modedisp.%04d.txt", i+1);
     outfp = fopen(outfname, "a");
