@@ -24,8 +24,8 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr)
   char    outfname[40];
 
   /* Allocating memory */
-  xi 		= CreateVector(r.nmodes);
-  thet 		= CreateVector(r.nmodes);
+  xi 		  = CreateVector(r.nmodes);
+  thet    = CreateVector(r.nmodes);
   gam 		= CreateVector(r.nmodes);
   sig 		= CreateVector(r.nmodes);
   q_t 		= CreateVector(r.nmodes);
@@ -50,7 +50,7 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr)
     q_t[j]    = gsl_vector_get(s->qvec, j);
     qdot_t[j] = gsl_vector_get(s->qdotvec, j);
     f_t[j]    = ForceSys(*s, r, j);
-    //printf("%f\n", f_t);
+    // printf("%f\n", f_t);
 
     c_t[j]    = r.dt*r.dt/2.0 * (f_t[j] - gam[j]*qdot_t[j] ) + 
                 sig[j]*pow(r.dt, 1.5)*( 0.5*xi[j] + 1.0/(2.0*pow(3.0, 0.5))*thet[j]);
@@ -70,6 +70,7 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr)
     gsl_vector_set (s->qdotvec, j, qdot_tp1);
     //printf("Thread %d is doing iteration %d.\n", omp_get_thread_num( ), j);
   }
+
   // Free up memory
   free(xi);
   free(thet);
@@ -81,6 +82,7 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr)
   free(f_t);
 
   // Writing in a file !!
+  double systeng = 0.0;
   if ((r.step)%r.nfreq==0) 
   {
     printf("# STEP %10d OF %10d IS %2.2f \%\n", r.step, r.nsteps, (float) r.step*100.0/r.nsteps);
@@ -88,7 +90,7 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr)
     // fprintf(outfp, "%f\t%f\n", xi, thet);
     // fclose(outfp);
     
-    for (j=0; j<9; j++)
+    for (j=0; j<r.nmodes; j++)
     {
       sprintf(outfname, "modedisp.%04d.txt", j+1);
       outfp = fopen(outfname, "a");
@@ -104,18 +106,22 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr)
       fr        = gsl_vector_get(s->frvec, j);
       teng      = 0.5*m*gsl_vector_get(s->qdotvec, j)*gsl_vector_get(s->qdotvec, j) +
       0.5*m*pow(2*PI*fr, 2.0)*gsl_vector_get(s->qvec, j)*gsl_vector_get(s->qvec, j);
+      systeng   += teng;
 
       sprintf(outfname, "modeteng.%04d.txt", j+1);
       outfp = fopen(outfname, "a");
       fprintf(outfp, "%5.5e\n", teng);
-      fclose(outfp);
-    
+      fclose(outfp);      
+
       // sprintf(outfname, "modenormaldist.1.txt", r.step);
       // outfp = fopen(outfname, "a");
       // fprintf(outfp, "%f\t%f\n", xi, thet);
       // fclose(outfp); 
     }
-
+    sprintf(outfname, "modetotteng.txt");
+    outfp = fopen(outfname, "a");
+    fprintf(outfp, "%5.5e\n", systeng);
+    fclose(outfp);
   }
 
   return;

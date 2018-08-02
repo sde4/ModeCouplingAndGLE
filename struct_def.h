@@ -26,12 +26,15 @@ typedef struct {
 typedef struct {
   gsl_matrix    *modindmat;
   gsl_vector    *frvec;
+  gsl_matrix    *IRs_pqrcountmat;
+  gsl_matrix    *IRs_pqrcombmat;
   gsl_vector    *gamvec;
   gsl_vector    *mvec;
   gsl_matrix    *alphamat;
   gsl_vector    *qvec;
   gsl_vector    *qdotvec;
   gsl_vector    *sigvec;
+  int           IRcou;
   }             sys_var;
 
 typedef struct {

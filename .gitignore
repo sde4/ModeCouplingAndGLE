@@ -2,3 +2,5 @@ Makefile
 *.o
 *.omp
 *.serial
+*.dat
+*.txt

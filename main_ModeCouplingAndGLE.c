@@ -56,9 +56,9 @@ int 	main(int argc, char* argv[])
   sv.e_pre            = 1E-4;
 
   // Run Parameters !!
-  r.dt                = 0.001;                                // ns
+  r.dt                = 0.02;                                // ns
   r.runtime           = 2E6;                                  // ns
-  r.nfreq             = 1000;
+  r.nfreq             = 50;
   r.nmodes            = sc.mmax*sc.nmax;   
 
   printf("# No. of modes: %d  gam: %f alpha: %f seed: %d \n", r.nmodes, mc.gam, mc.alpha, seed);
@@ -66,12 +66,12 @@ int 	main(int argc, char* argv[])
   /* System initialization */
   s.modindmat         = gsl_matrix_alloc(r.nmodes, 2);
   s.frvec             = gsl_vector_alloc(r.nmodes);
+  s.IRs_pqrcountmat   = gsl_matrix_alloc(r.nmodes, 2);
   s.gamvec            = gsl_vector_alloc(r.nmodes);
   s.mvec              = gsl_vector_alloc(r.nmodes);
   s.alphamat          = gsl_matrix_alloc(r.nmodes, r.nmodes);
   s.qvec              = gsl_vector_alloc(r.nmodes);
   s.qdotvec           = gsl_vector_alloc(r.nmodes);
-
   s.sigvec            = gsl_vector_alloc(r.nmodes);
 
 

@@ -1,14 +1,17 @@
+#!/bin/bash
 ## Sample batch script for openmp C executable submission
-#PBS	-q	aluru #secondary
-#PBS	-l	nodes=1:ppn=2
-#PBS	-l	walltime=24:00:00
-##PBS	-A	aluru
-#PBS 	-j 	oe
-#PBS 	-o 	out.mcgle
-#PBS 	-N 	mcgle
 
+#SBATCH         -J      mcgle               	# Job Name
+#SBATCH         -o      out.mcgle           	# Output and error file name
+#SBATCH         -p      flat-quadrant               	# Queue name
+#SBATCH         -N      1                     	# Total num of Nodes requested 68 cores per Node
+#SBATCH         -n      68                    	# Total num of mpi tasks requested
+#SBATCH         -t      24:00:00      	      	# Run time (hh:mm:ss)
+#SBATCH         --mail-user=sde4@illinois.edu
+#SBATCH         --mail-type=fail            	# Send email at begin and end of job
+#SBATCH         -A      TG-CDA100010         	# projectnumber
 
-
-cd ${PBS_O_WORKDIR}
-##export OMP_NUM_THREADS=10
-./mcgle.serial
+#cd ${PBS_O_WORKDIR}
+export OMP_NUM_THREADS=68
+seed=1000
+GSL_RNG_SEED=${seed} ./mcgle.omp 3 3 0.0000 0.0001 ${seed}
