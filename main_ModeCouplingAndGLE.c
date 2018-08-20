@@ -40,15 +40,15 @@ int 	main(int argc, char* argv[])
 
   sc.mmax             = atoi(argv[1]);
   sc.nmax             = atoi(argv[2]);
-  sc.Lx               = 4E4;
-  sc.Ly               = 6E4;
+  sc.Lx               = 2E4;
+  sc.Ly               = 1E4;
   sc.run_id           = 1;
 
   // Material constants !!
   mc.Et               = 340*Npm_eVpA2;                        // eV/A^2
   mc.DEt              = 40*Npm_eVpA2;                         // eV/A^2
   mc.rho              = 7.4E-7*kgpm2_amupA2*amuA2pns2_eV;     // eV/(A^4/ns^2)
-  mc.gam 	      = atof(argv[3]);			      // 1/ns
+  mc.gam 	            = atof(argv[3]);			                  // 1/ns
   mc.alpha            = atof(argv[4]);
 
   // State variables !!
@@ -56,7 +56,7 @@ int 	main(int argc, char* argv[])
   sv.e_pre            = 1E-4;
 
   // Run Parameters !!
-  r.dt                = 0.02;                                // ns
+  r.dt                = 0.02;                                 // ns
   r.runtime           = 2E6;                                  // ns
   r.nfreq             = 50;
   r.nmodes            = sc.mmax*sc.nmax;   
@@ -65,6 +65,12 @@ int 	main(int argc, char* argv[])
 
   /* System initialization */
   s.modindmat         = gsl_matrix_alloc(r.nmodes, 2);
+  s.modindvec         = gsl_vector_alloc(r.nmodes);
+  s.SSmodindvec       = gsl_vector_alloc(r.nmodes/4);         // check the dimensions
+  s.SAmodindvec       = gsl_vector_alloc(r.nmodes/4);
+  s.ASmodindvec       = gsl_vector_alloc(r.nmodes/4);
+  s.AAmodindvec       = gsl_vector_alloc(r.nmodes/4);
+  s.NZs_pqrcombmat    = gsl_matrix_alloc(r.nmodes/4*r.nmodes/4*r.nmodes/4*(6+6*3)*4, 4);
   s.frvec             = gsl_vector_alloc(r.nmodes);
   s.IRs_pqrcountmat   = gsl_matrix_alloc(r.nmodes, 2);
   s.gamvec            = gsl_vector_alloc(r.nmodes);
