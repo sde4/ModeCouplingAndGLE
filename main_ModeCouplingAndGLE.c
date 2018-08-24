@@ -71,8 +71,8 @@ int 	main(int argc, char* argv[])
   s.ASmodindvec       = gsl_vector_alloc(r.nmodes/4);
   s.AAmodindvec       = gsl_vector_alloc(r.nmodes/4);
   s.NZs_pqrcombmat    = gsl_matrix_alloc(r.nmodes/4*r.nmodes/4*r.nmodes/4*(6+6*3)*4, 4);
-  s.frvec             = gsl_vector_alloc(r.nmodes);
   s.IRs_pqrcountmat   = gsl_matrix_alloc(r.nmodes, 2);
+  s.frvec             = gsl_vector_alloc(r.nmodes);
   s.gamvec            = gsl_vector_alloc(r.nmodes);
   s.mvec              = gsl_vector_alloc(r.nmodes);
   s.alphamat          = gsl_matrix_alloc(r.nmodes, r.nmodes);

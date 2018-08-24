@@ -32,8 +32,9 @@ typedef struct {
   gsl_vector    *AAmodindvec;
   gsl_vector    *frvec;
   gsl_matrix    *NZs_pqrcombmat;
-  gsl_matrix    *IRs_pqrcountmat;
   gsl_matrix    *IRs_pqrcombmat;
+  gsl_matrix    *IRs_pqrcombmatsorted;
+  gsl_matrix    *IRs_pqrcountmat;
   gsl_vector    *gamvec;
   gsl_vector    *mvec;
   gsl_matrix    *alphamat;
@@ -42,6 +43,7 @@ typedef struct {
   gsl_vector    *sigvec;
   int           NZcou;
   int           IRcou;
+  int           NmodeIRcou;
   }             sys_var;
 
 typedef struct {
