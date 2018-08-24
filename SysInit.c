@@ -215,16 +215,6 @@ void SysInit(sys_var * s, run_param r, mat_const mc, state_var sv, sys_const sc,
   fprintf(outfp, "%f", gsl_vector_get(s->frvec, i));
   fclose(outfp);
 
-  // IR count file !!
-  outfp = fopen("IRs_pqrcountmat.dat", "w");
-  for (i = 0; i < r.nmodes - 1; i++) {
-    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 0));
-    fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 1));
-  }
-  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 0));
-  fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 1));
-  fclose(outfp);
-
   // IR comb file !!
   outfp = fopen("IRs_pqrcombmat.dat", "w");
   for (i = 0; i < s->IRcou - 1; i++) {
@@ -237,6 +227,30 @@ void SysInit(sys_var * s, run_param r, mat_const mc, state_var sv, sys_const sc,
   fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmat, i, 1));
   fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmat, i, 2));
   fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcombmat, i, 3));
+  fclose(outfp);
+
+  // IR comb sorted file !!
+  outfp = fopen("IRs_pqrcombmatsorted.dat", "w");
+  for (i = 0; i < s->IRcou - 1; i++) {
+    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 0));
+    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 1));
+    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 2));
+    fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 3));
+  }
+  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 0));
+  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 1));
+  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 2));
+  fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 3));
+  fclose(outfp);
+
+  // IR count file !!
+  outfp = fopen("IRs_pqrcountmat.dat", "w");
+  for (i = 0; i < s->NmodeIRcou - 1; i++) {
+    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 0));
+    fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 1));
+  }
+  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 0));
+  fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 1));
   fclose(outfp);
 
   // mass file !!
