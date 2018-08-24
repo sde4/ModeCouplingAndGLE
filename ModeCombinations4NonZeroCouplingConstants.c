@@ -6,7 +6,7 @@
 #include "struct_def.h"
 
 void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
-  printf("## 2.1 Mode combinations for non-zero coupling constants ...\n");
+  printf("##   -Mode combinations for non-zero coupling constants ...\n");
 
   /**************************/
   // Mode combinations leading
