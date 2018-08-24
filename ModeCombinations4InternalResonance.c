@@ -60,4 +60,29 @@ void ModeCombinations4InternalResonance(sys_var * s, run_param r, double tol) {
     }
   }
   s->IRcou = cou1;
+  s->IRs_pqrcombmatsorted    = gsl_matrix_alloc(s->IRcou, 4);
+  cou1=0; // counts the total number of IR combinations
+  cou3=0; // counts the number of distinct modes participating in IR
+  sind=1;
+  while(cou1<s->IRcou){
+    cou2=0; // counts the number of IR combinations for mode sind
+    for (j = 0; j < s->IRcou; j++){
+      if (gsl_matrix_get(s->IRs_pqrcombmat, j, 0)== sind){
+        pind = gsl_matrix_get(s->IRs_pqrcombmat, j, 1);
+	qind = gsl_matrix_get(s->IRs_pqrcombmat, j, 2);
+	rind = gsl_matrix_get(s->IRs_pqrcombmat, j, 3);
+	gsl_matrix_set(s->IRs_pqrcombmatsorted, cou1, 0, sind);
+	gsl_matrix_set(s->IRs_pqrcombmatsorted, cou1, 1, pind);
+	gsl_matrix_set(s->IRs_pqrcombmatsorted, cou1, 2, qind);
+	gsl_matrix_set(s->IRs_pqrcombmatsorted, cou1, 3, rind);	
+	cou1++;
+	cou2++;
+      }
+    }
+    gsl_matrix_set(s->IRs_pqrcountmat, cou3, 0, cou2);
+    gsl_matrix_set(s->IRs_pqrcountmat, cou3, 1, cou1);
+    cou3++;
+    sind++;
+  }
+  s->NmodeIRcou = cou3;
 }
