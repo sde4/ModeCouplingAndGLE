@@ -3,8 +3,8 @@
 #include "struct_def.h"
 
 /* Definitions for routines */
-void SysInit(sys_var *s, run_param r, mat_const mc, state_var sv, sys_const sc, gsl_rng * gr);
-void IntegrateSys(sys_var *s, run_param r, gsl_rng * gr);
+void SysInit(sys_var*, run_param , mat_const , state_var , sys_const , disc_const , gsl_rng* );
+void IntegrateSys(sys_var*, run_param , gsl_rng* );
 
 int 	main(int argc, char* argv[])
 {
@@ -29,6 +29,7 @@ int 	main(int argc, char* argv[])
   mat_const mc;
   state_var sv;
   sys_const sc;
+  disc_const dc;
   int seed 	      = atoi(argv[5]); 
 
   // system constants !!
@@ -48,7 +49,7 @@ int 	main(int argc, char* argv[])
   mc.Et               = 340*Npm_eVpA2;                        // eV/A^2
   mc.DEt              = 40*Npm_eVpA2;                         // eV/A^2
   mc.rho              = 7.4E-7*kgpm2_amupA2*amuA2pns2_eV;     // eV/(A^4/ns^2)
-  mc.gam 	            = atof(argv[3]);			                  // 1/ns
+  mc.gam 	      = atof(argv[3]);			                  // 1/ns
   mc.alpha            = atof(argv[4]);
 
   // State variables !!
@@ -56,10 +57,19 @@ int 	main(int argc, char* argv[])
   sv.e_pre            = 1E-4;
 
   // Run Parameters !!
-  r.dt                = 0.02;                                 // ns
+  r.dt                = 0.01;                                 // ns
   r.runtime           = 2E6;                                  // ns
-  r.nfreq             = 50;
+  r.nfreq             = 10;
   r.nmodes            = sc.mmax*sc.nmax;   
+
+  // Discretization Constants !!
+  dc.Nfx              = 51;                                  // set by mathematica wrapper
+  dc.Nfy              = 26;                                  // set by mathematica wrapper
+  dc.Lx 	      = sc.Lx/(1E4);			     // um - using different unit of length for discretization
+  dc.Ly 	      = sc.Ly/(1E4);			     // um - using different unit of length for discretization
+  dc.hx 	      = dc.Lx/(dc.Nfx-1.0);		     // um - using different unit of length for discretization
+  dc.hy 	      = dc.Ly/(dc.Nfy-1.0); 	 	     // um - using different unit of length for discretization
+  dc.gamunitconv      = 1.0/pow(1E4, 4.0);		     // Unit of gam is L^-4 - um^-4: convert to A^-4
 
   printf("# No. of modes: %d  gam: %f alpha: %f seed: %d \n", r.nmodes, mc.gam, mc.alpha, seed);
 
@@ -89,7 +99,7 @@ int 	main(int argc, char* argv[])
   gr    = gsl_rng_alloc(gT);
 
   // System Initialization
-  SysInit(&s, r, mc, sv, sc, gr);
+  SysInit(&s, r, mc, sv, sc, dc, gr);
 
   // Integrate
   int     i;

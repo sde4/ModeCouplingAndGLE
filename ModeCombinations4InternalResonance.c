@@ -5,8 +5,8 @@
 #include <omp.h>
 #include "struct_def.h"
 
-void ModeCombinations4InternalResonance(sys_var * s, run_param r, double tol) {
-  printf("## 2.2 Mode combinations for Internal resonances ...\n");
+void ModeCombinations4InternalResonance(sys_var * s, double tol) {
+  printf("#    - Mode combinations for Internal resonances ...\n");
 
   /**************************/
   // Mode combinations leading 
@@ -85,4 +85,6 @@ void ModeCombinations4InternalResonance(sys_var * s, run_param r, double tol) {
     sind++;
   }
   s->NmodeIRcou = cou3;
+  
+  return;
 }

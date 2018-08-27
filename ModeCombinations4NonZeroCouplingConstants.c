@@ -6,7 +6,7 @@
 #include "struct_def.h"
 
 void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
-  printf("##   -Mode combinations for non-zero coupling constants ...\n");
+  printf("#    - Mode combinations for non-zero coupling constants ...\n");
 
   /**************************/
   // Mode combinations leading
@@ -1138,4 +1138,6 @@ void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
     }
   }
   s->NZcou = cou1;
+  
+  return;
 }

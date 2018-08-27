@@ -8,10 +8,11 @@
 #include "struct_def.h"
 
 /* Definitions for routines */
-void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r);
-void ModeCombinations4InternalResonance(sys_var * s, run_param r, double tol);
+void ModeCombinations4NonZeroCouplingConstants(sys_var* , run_param );
+void ModeCombinations4InternalResonance(sys_var* , double );
+void ThirdOrderCouplingCalculation(sys_var* , mat_const , disc_const );
 
-void SysInit(sys_var * s, run_param r, mat_const mc, state_var sv, sys_const sc, gsl_rng * gr) {
+void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, disc_const dc, gsl_rng* gr) {
   printf("\n# 2. System Initialization ...\n");
 
   int i, j, k, l, cou1, cou2, cou3, cou4, cou5;
@@ -55,7 +56,6 @@ void SysInit(sys_var * s, run_param r, mat_const mc, state_var sv, sys_const sc,
   double tol = 5E-4; // detuning parameter for IRs
   double gam;
   double m;
-  double alpha;
   double sig;
   double sigma, q, qdot, teng;
   FILE * outfp;
@@ -84,7 +84,13 @@ void SysInit(sys_var * s, run_param r, mat_const mc, state_var sv, sys_const sc,
   // Mode combinations leading 
   // to Internal resonances!
   /**************************/
-  ModeCombinations4InternalResonance(s, r, tol);
+  ModeCombinations4InternalResonance(s, tol);
+
+  /**************************/
+  // Third order coupling 
+  // constant calculation!
+  /**************************/
+  ThirdOrderCouplingCalculation(s, mc, dc);
 
   /**************************/
   // Rest of the initializations !!
@@ -97,16 +103,6 @@ void SysInit(sys_var * s, run_param r, mat_const mc, state_var sv, sys_const sc,
     /**************************/
     m = mc.rho * sc.Lx * sc.Ly;
     gsl_vector_set(s->mvec, i, m);
-
-    /**************************/
-    // coupling term calculation !!
-    /**************************/
-    for (j = 0; j < r.nmodes; j++) {
-      pord = gsl_matrix_get(s->modindmat, j, 0);
-      qord = gsl_matrix_get(s->modindmat, j, 1);
-      alpha = mc.alpha; //2.0*pow(PI, 4.0)*mc.Et*(mord*mord*pord*pord + nord*nord*qord*qord)/(64*sc.L*sc.L);
-      gsl_matrix_set(s->alphamat, i, j, alpha);
-    }
 
     /**************************/
     // friction calculation !!
@@ -252,7 +248,21 @@ void SysInit(sys_var * s, run_param r, mat_const mc, state_var sv, sys_const sc,
   fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 0));
   fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 1));
   fclose(outfp);
-
+  
+  // coupling file !!
+  outfp = fopen("alphamat.dat", "w");
+  for (i = 0; i < s->IRcou - 1; i++) {
+    for (j = 0; j < 2 - 1; j++) {
+      fprintf(outfp, "%5.5e\t", gsl_matrix_get(s->alphamat, i, j));
+    }
+    fprintf(outfp, "%5.5e\n", gsl_matrix_get(s->alphamat, i, j));
+  }
+  for (j = 0; j < 2 - 1; j++) {
+    fprintf(outfp, "%5.5e\t", gsl_matrix_get(s->alphamat, i, j));
+  }
+  fprintf(outfp, "%5.5e\n", gsl_matrix_get(s->alphamat, i, j));
+  fclose(outfp);
+  
   // mass file !!
   outfp = fopen("mvec.dat", "w");
   for (i = 0; i < r.nmodes - 1; i++) {
@@ -261,19 +271,6 @@ void SysInit(sys_var * s, run_param r, mat_const mc, state_var sv, sys_const sc,
   fprintf(outfp, "%f", gsl_vector_get(s->mvec, i));
   fclose(outfp);
 
-  // coupling file !!
-  outfp = fopen("coupmat.dat", "w");
-  for (i = 0; i < r.nmodes - 1; i++) {
-    for (j = 0; j < r.nmodes - 1; j++) {
-      fprintf(outfp, "%5.5e\t", gsl_matrix_get(s->alphamat, i, j));
-    }
-    fprintf(outfp, "%5.5e\n", gsl_matrix_get(s->alphamat, i, j));
-  }
-  for (j = 0; j < r.nmodes - 1; j++) {
-    fprintf(outfp, "%5.5e\t", gsl_matrix_get(s->alphamat, i, j));
-  }
-  fprintf(outfp, "%5.5e\n", gsl_matrix_get(s->alphamat, i, j));
-  fclose(outfp);
 
   // friction file !!
   outfp = fopen("gamvec.dat", "w");
@@ -319,5 +316,6 @@ void SysInit(sys_var * s, run_param r, mat_const mc, state_var sv, sys_const sc,
   outfp = fopen(outfname, "a");
   fprintf(outfp, "%5.5e\n", systeng);
   fclose(outfp);
+
   return;
 }

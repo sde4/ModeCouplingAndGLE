@@ -10,7 +10,7 @@
 #include "array_def.h"
 
 /* Definitions for routines */
-double ForceSys(sys_var s, run_param r, int j);
+double ForceSys(sys_var , run_param , int );
 
 void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr)
 {

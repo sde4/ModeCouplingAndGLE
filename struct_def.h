@@ -35,9 +35,9 @@ typedef struct {
   gsl_matrix    *IRs_pqrcombmat;
   gsl_matrix    *IRs_pqrcombmatsorted;
   gsl_matrix    *IRs_pqrcountmat;
+  gsl_matrix    *alphamat;
   gsl_vector    *gamvec;
   gsl_vector    *mvec;
-  gsl_matrix    *alphamat;
   gsl_vector    *qvec;
   gsl_vector    *qdotvec;
   gsl_vector    *sigvec;
@@ -67,5 +67,14 @@ typedef struct {
   int           run_id;
   }             sys_const;
 
+typedef struct {
+  int           Nfx;
+  int           Nfy;
+  double        Lx;
+  double        Ly;
+  double        hx;
+  double        hy;
+  double 	gamunitconv;
+  }             disc_const;
 
 #endif
