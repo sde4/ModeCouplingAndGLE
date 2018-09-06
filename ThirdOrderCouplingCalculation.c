@@ -74,10 +74,10 @@ void ThirdOrderCouplingCalculation(sys_var* s, mat_const mc, disc_const dc) {
 
   printf("#          Mode groups and couling constants ...\n");
   for (i = 0; i < s->IRcou; i++){
-    sind = gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 0);
-    pind = gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 1);
-    qind = gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 2);
-    rind = gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 3);
+    sind = (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 0);
+    pind = (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 1);
+    qind = (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 2);
+    rind = (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 3);
     
     mords = gsl_matrix_get(s->modindmat, sind-1, 0); 
     nords = gsl_matrix_get(s->modindmat, sind-1, 1);

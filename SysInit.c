@@ -243,10 +243,12 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   outfp = fopen("IRs_pqrcountmat.dat", "w");
   for (i = 0; i < s->NmodeIRcou - 1; i++) {
     fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 0));
-    fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 1));
+    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 1));
+    fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 2));
   }
   fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 0));
-  fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 1));
+  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 1));
+  fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 2));
   fclose(outfp);
   
   // coupling file !!
@@ -273,7 +275,7 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
 
 
   // friction file !!
-  outfp = fopen("gamvec.dat", "w");
+  outfp = fopen("gamvec.txt", "w");
   for (i = 0; i < r.nmodes - 1; i++) {
     fprintf(outfp, "%5.5e\n", gsl_vector_get(s->gamvec, i));
   }
@@ -281,7 +283,7 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   fclose(outfp);
 
   // noise file !!
-  outfp = fopen("noisevec.dat", "w");
+  outfp = fopen("noisevec.txt", "w");
   for (i = 0; i < r.nmodes - 1; i++) {
     fprintf(outfp, "%5.5e\n", gsl_vector_get(s->sigvec, i));
   }
@@ -290,24 +292,26 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
 
   // displacement and velocity files !!
   double systeng = 0.0;
-  for (i = 0; i < r.nmodes; i++) {
-    sprintf(outfname, "modedisp.%04d.txt", i + 1);
+  for (i=0; i<s->NmodeIRcou; i++){
+    sind      = (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 0);
+    
+    sprintf(outfname, "modedisp.%04d.txt", sind);
     outfp = fopen(outfname, "a");
-    fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qvec, i));
+    fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qvec, sind-1));
     fclose(outfp);
 
-    sprintf(outfname, "modevelc.%04d.txt", i + 1);
+    sprintf(outfname, "modevelc.%04d.txt", sind);
     outfp = fopen(outfname, "a");
-    fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qdotvec, i));
+    fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qdotvec, sind-1));
     fclose(outfp);
 
-    m = gsl_vector_get(s->mvec, i);
-    fr = gsl_vector_get(s->frvec, i);
-    teng = 0.5 * m * gsl_vector_get(s->qdotvec, i) * gsl_vector_get(s->qdotvec, i) +
-      0.5 * m * pow(2 * PI * fr, 2.0) * gsl_vector_get(s->qvec, i) * gsl_vector_get(s->qvec, i);
+    m = gsl_vector_get(s->mvec, sind-1);
+    fr = gsl_vector_get(s->frvec, sind-1);
+    teng = 0.5*m*gsl_vector_get(s->qdotvec, sind-1)*gsl_vector_get(s->qdotvec, sind-1) +
+      0.5*m*pow(2*PI*fr, 2.0)*gsl_vector_get(s->qvec, sind-1)*gsl_vector_get(s->qvec, sind-1);
     systeng += teng;
 
-    sprintf(outfname, "modeteng.%04d.txt", i + 1);
+    sprintf(outfname, "modeteng.%04d.txt", sind);
     outfp = fopen(outfname, "a");
     fprintf(outfp, "%5.5e\n", teng);
     fclose(outfp);

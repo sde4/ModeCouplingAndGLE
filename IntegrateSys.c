@@ -15,7 +15,7 @@ double ForceSys(sys_var , run_param , int );
 void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr)
 {
 
-  int     j, k;
+  int     j, k, sind;
   float   *xi, *thet;
   float   fr, *gam, m, *sig;
   float   *q_t, *qdot_t, *c_t, *f_t, q_tp1, qdot_tp1, f_tp1;
@@ -33,41 +33,44 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr)
   c_t 		= CreateVector(r.nmodes);
   f_t 		= CreateVector(r.nmodes);
 
-  #pragma omp parallel for
-  for (j=0; j<r.nmodes; j++)
+  #pragma omp parallel for private(j,sind)
+  for (j=0; j<s->NmodeIRcou; j++)
   {
-    gam[j]    = gsl_vector_get(s->gamvec, j);
-    sig[j]    = gsl_vector_get(s->sigvec, j);
+    sind           = (int) gsl_matrix_get(s->IRs_pqrcountmat, j, 0);
+    gam[sind-1]    = gsl_vector_get(s->gamvec, sind-1);
+    sig[sind-1]    = gsl_vector_get(s->sigvec, sind-1);
 
-    xi[j]     = gsl_ran_gaussian(gr, 1.0);
-    thet[j]   = gsl_ran_gaussian(gr, 1.0);
+    xi[sind-1]     = gsl_ran_gaussian(gr, 1.0);
+    thet[sind-1]   = gsl_ran_gaussian(gr, 1.0);
     //printf("%f\t%f\n", xi, thet);
   }
   
-  #pragma omp parallel for private(j,q_tp1)
-  for (j=0; j<r.nmodes; j++)
+  #pragma omp parallel for private(j,sind,q_tp1)
+  for (j=0; j<s->NmodeIRcou; j++)
   {
-    q_t[j]    = gsl_vector_get(s->qvec, j);
-    qdot_t[j] = gsl_vector_get(s->qdotvec, j);
-    f_t[j]    = ForceSys(*s, r, j);
-    // printf("%f\n", f_t);
+    sind      = (int) gsl_matrix_get(s->IRs_pqrcountmat, j, 0);
+    q_t[sind-1]    = gsl_vector_get(s->qvec, sind-1);
+    qdot_t[sind-1] = gsl_vector_get(s->qdotvec, sind-1);
+    f_t[sind-1]    = ForceSys(*s, r, j);
+    //printf("%f\n", f_t[sind-1]);
 
-    c_t[j]    = r.dt*r.dt/2.0 * (f_t[j] - gam[j]*qdot_t[j] ) + 
-                sig[j]*pow(r.dt, 1.5)*( 0.5*xi[j] + 1.0/(2.0*pow(3.0, 0.5))*thet[j]);
+    c_t[sind-1]    = r.dt*r.dt/2.0 * (f_t[sind-1] - gam[sind-1]*qdot_t[sind-1] ) + 
+                sig[sind-1]*pow(r.dt, 1.5)*( 0.5*xi[sind-1] + 1.0/(2.0*pow(3.0, 0.5))*thet[sind-1]);
 
-    q_tp1     = q_t[j] + r.dt*qdot_t[j] + c_t[j];
-    gsl_vector_set (s->qvec, j, q_tp1);
+    q_tp1     	   = q_t[sind-1] + r.dt*qdot_t[sind-1] + c_t[sind-1];
+    gsl_vector_set (s->qvec, sind-1, q_tp1);
   }
     
-  #pragma omp parallel for private(j,qdot_tp1,f_tp1)
-  for (j=0; j<r.nmodes; j++)
+  #pragma omp parallel for private(j,sind,qdot_tp1,f_tp1)
+  for (j=0; j<s->NmodeIRcou; j++)
   { 
+    sind      = (int) gsl_matrix_get(s->IRs_pqrcountmat, j, 0);
     f_tp1     = ForceSys(*s, r, j);
     
-    qdot_tp1  = qdot_t[j] + r.dt/2.0*( f_tp1 + f_t[j] ) - 
-                r.dt*gam[j]*qdot_t[j] + sig[j]*pow(r.dt, 0.5)*xi[j] - gam[j]*c_t[j];
+    qdot_tp1  = qdot_t[sind-1] + r.dt/2.0*( f_tp1 + f_t[sind-1] ) - 
+                r.dt*gam[sind-1]*qdot_t[sind-1] + sig[sind-1]*pow(r.dt, 0.5)*xi[sind-1] - gam[sind-1]*c_t[sind-1];
 
-    gsl_vector_set (s->qdotvec, j, qdot_tp1);
+    gsl_vector_set (s->qdotvec, sind-1, qdot_tp1);
     //printf("Thread %d is doing iteration %d.\n", omp_get_thread_num( ), j);
   }
 
@@ -90,25 +93,26 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr)
     // fprintf(outfp, "%f\t%f\n", xi, thet);
     // fclose(outfp);
     
-    for (j=0; j<r.nmodes; j++)
+    for (j=0; j<s->NmodeIRcou; j++)
     {
-      sprintf(outfname, "modedisp.%04d.txt", j+1);
+      sind      = (int) gsl_matrix_get(s->IRs_pqrcountmat, j, 0);
+      sprintf(outfname, "modedisp.%04d.txt", sind);
       outfp = fopen(outfname, "a");
-      fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qvec, j));
+      fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qvec, sind-1));
       fclose(outfp);
 
-      sprintf(outfname, "modevelc.%04d.txt", j+1);
+      sprintf(outfname, "modevelc.%04d.txt", sind);
       outfp = fopen(outfname, "a");
-      fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qdotvec, j));
+      fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qdotvec, sind-1));
       fclose(outfp);
 
-      m         = gsl_vector_get(s->mvec, j);
-      fr        = gsl_vector_get(s->frvec, j);
-      teng      = 0.5*m*gsl_vector_get(s->qdotvec, j)*gsl_vector_get(s->qdotvec, j) +
-      0.5*m*pow(2*PI*fr, 2.0)*gsl_vector_get(s->qvec, j)*gsl_vector_get(s->qvec, j);
+      m         = gsl_vector_get(s->mvec, sind-1);
+      fr        = gsl_vector_get(s->frvec, sind-1);
+      teng      = 0.5*m*gsl_vector_get(s->qdotvec, sind-1)*gsl_vector_get(s->qdotvec, sind-1) +
+      0.5*m*pow(2*PI*fr, 2.0)*gsl_vector_get(s->qvec, sind-1)*gsl_vector_get(s->qvec, sind-1);
       systeng   += teng;
 
-      sprintf(outfname, "modeteng.%04d.txt", j+1);
+      sprintf(outfname, "modeteng.%04d.txt", sind);
       outfp = fopen(outfname, "a");
       fprintf(outfp, "%5.5e\n", teng);
       fclose(outfp);      

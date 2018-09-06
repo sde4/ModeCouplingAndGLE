@@ -23,10 +23,17 @@ void ModeCombinations4InternalResonance(sys_var * s, double tol) {
   s->IRs_pqrcombmat    = gsl_matrix_alloc(s->NZcou, 4);
   for (i = 0; i < s->NZcou; i++) {
 
-    sind = gsl_matrix_get(s->NZs_pqrcombmat, i, 0);
-    pind = gsl_matrix_get(s->NZs_pqrcombmat, i, 1);
-    qind = gsl_matrix_get(s->NZs_pqrcombmat, i, 2);
-    rind = gsl_matrix_get(s->NZs_pqrcombmat, i, 3);
+    sind = (int) gsl_matrix_get(s->NZs_pqrcombmat, i, 0);
+    pind = (int) gsl_matrix_get(s->NZs_pqrcombmat, i, 1);
+    qind = (int) gsl_matrix_get(s->NZs_pqrcombmat, i, 2);
+    rind = (int) gsl_matrix_get(s->NZs_pqrcombmat, i, 3);
+
+/*
+    gsl_matrix_set(s->IRs_pqrcombmat, i, 0, sind);
+    gsl_matrix_set(s->IRs_pqrcombmat, i, 1, pind);
+    gsl_matrix_set(s->IRs_pqrcombmat, i, 2, qind);
+    gsl_matrix_set(s->IRs_pqrcombmat, i, 3, rind);
+    cou1++;*/
 
     frs = gsl_vector_get(s->frvec, sind - 1);
     frp = gsl_vector_get(s->frvec, pind - 1);
@@ -68,20 +75,23 @@ void ModeCombinations4InternalResonance(sys_var * s, double tol) {
     cou2=0; // counts the number of IR combinations for mode sind
     for (j = 0; j < s->IRcou; j++){
       if (gsl_matrix_get(s->IRs_pqrcombmat, j, 0)== sind){
-        pind = gsl_matrix_get(s->IRs_pqrcombmat, j, 1);
-	qind = gsl_matrix_get(s->IRs_pqrcombmat, j, 2);
-	rind = gsl_matrix_get(s->IRs_pqrcombmat, j, 3);
+        pind = (int) gsl_matrix_get(s->IRs_pqrcombmat, j, 1);
+	qind = (int) gsl_matrix_get(s->IRs_pqrcombmat, j, 2);
+	rind = (int) gsl_matrix_get(s->IRs_pqrcombmat, j, 3);
 	gsl_matrix_set(s->IRs_pqrcombmatsorted, cou1, 0, sind);
 	gsl_matrix_set(s->IRs_pqrcombmatsorted, cou1, 1, pind);
 	gsl_matrix_set(s->IRs_pqrcombmatsorted, cou1, 2, qind);
 	gsl_matrix_set(s->IRs_pqrcombmatsorted, cou1, 3, rind);	
-	cou1++;
 	cou2++;
+	cou1++;
       }
     }
-    gsl_matrix_set(s->IRs_pqrcountmat, cou3, 0, cou2);
-    gsl_matrix_set(s->IRs_pqrcountmat, cou3, 1, cou1);
-    cou3++;
+    if (cou2>0){
+      gsl_matrix_set(s->IRs_pqrcountmat, cou3, 0, sind);
+      gsl_matrix_set(s->IRs_pqrcountmat, cou3, 1, cou2);
+      gsl_matrix_set(s->IRs_pqrcountmat, cou3, 2, cou1);
+      cou3++;
+    }
     sind++;
   }
   s->NmodeIRcou = cou3;

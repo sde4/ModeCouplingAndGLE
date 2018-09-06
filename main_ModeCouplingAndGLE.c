@@ -4,6 +4,7 @@
 
 /* Definitions for routines */
 void SysInit(sys_var*, run_param , mat_const , state_var , sys_const , disc_const , gsl_rng* );
+void SysRead(sys_var*, run_param , mat_const , state_var , sys_const , disc_const , gsl_rng* );
 void IntegrateSys(sys_var*, run_param , gsl_rng* );
 
 int 	main(int argc, char* argv[])
@@ -81,11 +82,10 @@ int 	main(int argc, char* argv[])
   s.ASmodindvec       = gsl_vector_alloc(r.nmodes/4);
   s.AAmodindvec       = gsl_vector_alloc(r.nmodes/4);
   s.NZs_pqrcombmat    = gsl_matrix_alloc(r.nmodes/4*r.nmodes/4*r.nmodes/4*(6+6*3)*4, 4);
-  s.IRs_pqrcountmat   = gsl_matrix_alloc(r.nmodes, 2);
+  s.IRs_pqrcountmat   = gsl_matrix_alloc(r.nmodes, 3);
   s.frvec             = gsl_vector_alloc(r.nmodes);
   s.gamvec            = gsl_vector_alloc(r.nmodes);
   s.mvec              = gsl_vector_alloc(r.nmodes);
-  s.alphamat          = gsl_matrix_alloc(r.nmodes, r.nmodes);
   s.qvec              = gsl_vector_alloc(r.nmodes);
   s.qdotvec           = gsl_vector_alloc(r.nmodes);
   s.sigvec            = gsl_vector_alloc(r.nmodes);
@@ -99,7 +99,8 @@ int 	main(int argc, char* argv[])
   gr    = gsl_rng_alloc(gT);
 
   // System Initialization
-  SysInit(&s, r, mc, sv, sc, dc, gr);
+  // SysInit(&s, r, mc, sv, sc, dc, gr);
+  SysRead(&s, r, mc, sv, sc, dc, gr);
 
   // Integrate
   int     i;
