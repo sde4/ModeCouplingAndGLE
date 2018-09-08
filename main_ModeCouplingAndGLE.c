@@ -5,7 +5,7 @@
 /* Definitions for routines */
 void SysInit(sys_var*, run_param , mat_const , state_var , sys_const , disc_const , gsl_rng* );
 void SysRead(sys_var*, run_param , mat_const , state_var , sys_const , disc_const , gsl_rng* );
-void IntegrateSys(sys_var*, run_param , gsl_rng* );
+void IntegrateSys(sys_var*, run_param , gsl_rng* , state_var);
 
 int 	main(int argc, char* argv[])
 {
@@ -20,7 +20,7 @@ int 	main(int argc, char* argv[])
   
   if (argc!=6) 
   {
-   printf("ERROR: specify four arguments: 1. mmax 2. nmax 3. gam 4. alpha 5. seed \n");
+   printf("ERROR: specify four arguments: 1. mmax 2. nmax 3. gam 4. Init(0)/Read(1) 5. seed \n");
    exit(1);
   }
 
@@ -51,16 +51,16 @@ int 	main(int argc, char* argv[])
   mc.DEt              = 40*Npm_eVpA2;                         // eV/A^2
   mc.rho              = 7.4E-7*kgpm2_amupA2*amuA2pns2_eV;     // eV/(A^4/ns^2)
   mc.gam 	      = atof(argv[3]);			                  // 1/ns
-  mc.alpha            = atof(argv[4]);
+  // mc.alpha            = atof(argv[4]);
 
   // State variables !!
   sv.T                = 300;                                  // K
   sv.e_pre            = 1E-4;
 
   // Run Parameters !!
-  r.dt                = 0.01;                                 // ns
+  r.dt                = 0.005;                                // ns
   r.runtime           = 2E6;                                  // ns
-  r.nfreq             = 10;
+  r.nfreq             = 200;
   r.nmodes            = sc.mmax*sc.nmax;   
 
   // Discretization Constants !!
@@ -72,22 +72,25 @@ int 	main(int argc, char* argv[])
   dc.hy 	      = dc.Ly/(dc.Nfy-1.0); 	 	     // um - using different unit of length for discretization
   dc.gamunitconv      = 1.0/pow(1E4, 4.0);		     // Unit of gam is L^-4 - um^-4: convert to A^-4
 
-  printf("# No. of modes: %d  gam: %f alpha: %f seed: %d \n", r.nmodes, mc.gam, mc.alpha, seed);
+  const char *mode[2];
+  mode[0] = "Init";
+  mode[1] = "Read";
+  printf("# No. of modes: %d  gam: %f Mode: %s seed: %d \n", r.nmodes, mc.gam, mode[atoi(argv[4])], seed);
 
   /* System initialization */
   s.modindmat         = gsl_matrix_alloc(r.nmodes, 2);
   s.modindvec         = gsl_vector_alloc(r.nmodes);
-  s.SSmodindvec       = gsl_vector_alloc(r.nmodes/4);         // check the dimensions
-  s.SAmodindvec       = gsl_vector_alloc(r.nmodes/4);
-  s.ASmodindvec       = gsl_vector_alloc(r.nmodes/4);
-  s.AAmodindvec       = gsl_vector_alloc(r.nmodes/4);
-  s.NZs_pqrcombmat    = gsl_matrix_alloc(r.nmodes/4*r.nmodes/4*r.nmodes/4*(6+6*3)*4, 4);
+  s.SSmodindvec       = gsl_vector_alloc(r.nmodes);         // check the dimensions
+  s.SAmodindvec       = gsl_vector_alloc(r.nmodes);
+  s.ASmodindvec       = gsl_vector_alloc(r.nmodes);
+  s.AAmodindvec       = gsl_vector_alloc(r.nmodes);
   s.IRs_pqrcountmat   = gsl_matrix_alloc(r.nmodes, 3);
   s.frvec             = gsl_vector_alloc(r.nmodes);
   s.gamvec            = gsl_vector_alloc(r.nmodes);
   s.mvec              = gsl_vector_alloc(r.nmodes);
   s.qvec              = gsl_vector_alloc(r.nmodes);
   s.qdotvec           = gsl_vector_alloc(r.nmodes);
+  s.fvec              = gsl_vector_alloc(r.nmodes);
   s.sigvec            = gsl_vector_alloc(r.nmodes);
 
 
@@ -99,8 +102,10 @@ int 	main(int argc, char* argv[])
   gr    = gsl_rng_alloc(gT);
 
   // System Initialization
-  // SysInit(&s, r, mc, sv, sc, dc, gr);
-  SysRead(&s, r, mc, sv, sc, dc, gr);
+  if (atoi(argv[4])==0)
+    SysInit(&s, r, mc, sv, sc, dc, gr);
+  else 
+    SysRead(&s, r, mc, sv, sc, dc, gr);
 
   // Integrate
   int     i;
@@ -111,7 +116,7 @@ int 	main(int argc, char* argv[])
   {
     r.step = i;
 
-    IntegrateSys(&s, r, gr);
+    IntegrateSys(&s, r, gr, sv);
 
   }
   gsl_rng_free(gr);

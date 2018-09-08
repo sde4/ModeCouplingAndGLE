@@ -14,4 +14,5 @@
 #cd ${PBS_O_WORKDIR}
 export OMP_NUM_THREADS=68
 seed=1000
-GSL_RNG_SEED=${seed} ./mcgle.omp 12 12 0.0000 0.0001 ${seed}
+GSL_RNG_SEED=${seed} 
+./mcgle.omp 12 12 0.0000 R ${seed}

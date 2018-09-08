@@ -10,18 +10,21 @@
 #include "array_def.h"
 
 /* Definitions for routines */
-double ForceSys(sys_var , run_param , int );
+for_var ForceSys(sys_var , run_param , int );
 
-void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr)
+void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr, state_var sv)
 {
 
   int     j, k, sind;
   float   *xi, *thet;
-  float   fr, *gam, m, *sig;
+  float   fr, *gam, m, *sig, sigma;
   float   *q_t, *qdot_t, *c_t, *f_t, q_tp1, qdot_tp1, f_tp1;
   float   teng;
-  FILE    *outfp;
+  for_var f;
+  FILE    *outfp, *outfp1;
   char    outfname[40];
+  
+
 
   /* Allocating memory */
   xi 		  = CreateVector(r.nmodes);
@@ -45,27 +48,41 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr)
     //printf("%f\t%f\n", xi, thet);
   }
   
-  #pragma omp parallel for private(j,sind,q_tp1)
+  #pragma omp parallel for private(j,sind,q_tp1,f)
   for (j=0; j<s->NmodeIRcou; j++)
   {
-    sind      = (int) gsl_matrix_get(s->IRs_pqrcountmat, j, 0);
+    sind      	   = (int) gsl_matrix_get(s->IRs_pqrcountmat, j, 0);
     q_t[sind-1]    = gsl_vector_get(s->qvec, sind-1);
     qdot_t[sind-1] = gsl_vector_get(s->qdotvec, sind-1);
-    f_t[sind-1]    = ForceSys(*s, r, j);
+    f    	   = ForceSys(*s, r, j);
+    f_t[sind-1]    = f.f1+f.f3;
     //printf("%f\n", f_t[sind-1]);
 
     c_t[sind-1]    = r.dt*r.dt/2.0 * (f_t[sind-1] - gam[sind-1]*qdot_t[sind-1] ) + 
                 sig[sind-1]*pow(r.dt, 1.5)*( 0.5*xi[sind-1] + 1.0/(2.0*pow(3.0, 0.5))*thet[sind-1]);
 
     q_tp1     	   = q_t[sind-1] + r.dt*qdot_t[sind-1] + c_t[sind-1];
+
+    /*
+    // randomizing the displacements
+    if (sind!=1){
+    fr   	   = gsl_vector_get(s->frvec, j);
+    m 		   = gsl_vector_get(s->mvec, j);
+    sigma 	   = pow(kB * sv.T / (m * pow(2 * PI * fr, 2.0)), 0.5);
+    q_tp1 	   = gsl_ran_gaussian(gr, sigma);
+    }
+    */
+ 
     gsl_vector_set (s->qvec, sind-1, q_tp1);
   }
     
-  #pragma omp parallel for private(j,sind,qdot_tp1,f_tp1)
+  #pragma omp parallel for private(j,sind,qdot_tp1,f,f_tp1)
   for (j=0; j<s->NmodeIRcou; j++)
   { 
     sind      = (int) gsl_matrix_get(s->IRs_pqrcountmat, j, 0);
-    f_tp1     = ForceSys(*s, r, j);
+    f         = ForceSys(*s, r, j);
+    gsl_vector_set (s->fvec, sind-1, f.f3);                                // writing just the nonlinear part
+    f_tp1     = f.f1+f.f3;
     
     qdot_tp1  = qdot_t[sind-1] + r.dt/2.0*( f_tp1 + f_t[sind-1] ) - 
                 r.dt*gam[sind-1]*qdot_t[sind-1] + sig[sind-1]*pow(r.dt, 0.5)*xi[sind-1] - gam[sind-1]*c_t[sind-1];
@@ -85,7 +102,6 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr)
   free(f_t);
 
   // Writing in a file !!
-  double systeng = 0.0;
   if ((r.step)%r.nfreq==0) 
   {
     printf("# STEP %10d OF %10d IS %2.2f \%\n", r.step, r.nsteps, (float) r.step*100.0/r.nsteps);
@@ -93,39 +109,55 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr)
     // fprintf(outfp, "%f\t%f\n", xi, thet);
     // fclose(outfp);
     
-    for (j=0; j<s->NmodeIRcou; j++)
-    {
-      sind      = (int) gsl_matrix_get(s->IRs_pqrcountmat, j, 0);
-      sprintf(outfname, "modedisp.%04d.txt", sind);
-      outfp = fopen(outfname, "a");
-      fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qvec, sind-1));
-      fclose(outfp);
+    // trajectory file !!
+    outfp1 = fopen("modetraj.txt", "a");
+    fprintf(outfp1, "%d\n", r.step);
+    double systeng = 0.0;
+    for (j=0; j<s->NmodeIRcou; j++){
+    //for (j=0; j<4; j++){
+      sind      =  (int) gsl_matrix_get(s->IRs_pqrcountmat, j, 0);
+      
+      // sprintf(outfname, "modedisp.%04d.txt", sind);
+      // outfp = fopen(outfname, "a");
+      // fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qvec, sind-1));
+      // fclose(outfp);
 
-      sprintf(outfname, "modevelc.%04d.txt", sind);
-      outfp = fopen(outfname, "a");
-      fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qdotvec, sind-1));
-      fclose(outfp);
+      // sprintf(outfname, "modevelc.%04d.txt", sind);
+      // outfp = fopen(outfname, "a");
+      // fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qdotvec, sind-1));
+      // fclose(outfp);
 
-      m         = gsl_vector_get(s->mvec, sind-1);
-      fr        = gsl_vector_get(s->frvec, sind-1);
-      teng      = 0.5*m*gsl_vector_get(s->qdotvec, sind-1)*gsl_vector_get(s->qdotvec, sind-1) +
-      0.5*m*pow(2*PI*fr, 2.0)*gsl_vector_get(s->qvec, sind-1)*gsl_vector_get(s->qvec, sind-1);
-      systeng   += teng;
+      // sprintf(outfname, "modeforc.%04d.txt", sind);
+      // outfp = fopen(outfname, "a");
+      // f = ForceSys(*s, r, i);
+      // gsl_vector_set(s->fvec, sind-1, f.f3);          // storing just the nonlinear part
+      // fprintf(outfp, "%5.5e\n", gsl_vector_get(s->fvec, sind-1));
+      // fclose(outfp);
 
-      sprintf(outfname, "modeteng.%04d.txt", sind);
-      outfp = fopen(outfname, "a");
-      fprintf(outfp, "%5.5e\n", teng);
-      fclose(outfp);      
+      q_tp1    = gsl_vector_get(s->qvec, sind-1);
+      qdot_tp1 = gsl_vector_get(s->qdotvec, sind-1);
+      f_tp1    = gsl_vector_get(s->fvec, sind-1);
+      m        = gsl_vector_get(s->mvec, sind-1);
+      fr       = gsl_vector_get(s->frvec, sind-1);
+      teng     = 0.5*m*qdot_tp1*qdot_tp1 + 0.5*m*2*PI*fr*2*PI*fr*q_tp1*q_tp1;
+      systeng += teng;
+
+      // sprintf(outfname, "modeteng.%04d.txt", sind);
+      // outfp = fopen(outfname, "a");
+      // fprintf(outfp, "%5.5e\n", teng);
+      // fclose(outfp);
+      fprintf(outfp1, "%d %5.5e %5.5e %5.5e %5.5e\n", sind, q_tp1, qdot_tp1, f_tp1, teng);
+
 
       // sprintf(outfname, "modenormaldist.1.txt", r.step);
       // outfp = fopen(outfname, "a");
       // fprintf(outfp, "%f\t%f\n", xi, thet);
       // fclose(outfp); 
     }
-    sprintf(outfname, "modetotteng.txt");
-    outfp = fopen(outfname, "a");
+    outfp = fopen("modetotteng.txt", "a");
     fprintf(outfp, "%5.5e\n", systeng);
     fclose(outfp);
+    fclose(outfp1);
   }
 
   return;

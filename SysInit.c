@@ -11,16 +11,26 @@
 void ModeCombinations4NonZeroCouplingConstants(sys_var* , run_param );
 void ModeCombinations4InternalResonance(sys_var* , double );
 void ThirdOrderCouplingCalculation(sys_var* , mat_const , disc_const );
+for_var ForceSys(sys_var , run_param , int );
 
 void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, disc_const dc, gsl_rng* gr) {
   printf("\n# 2. System Initialization ...\n");
 
   int i, j, k, l, cou1, cou2, cou3, cou4, cou5;
-  cou1 = 0;
-  cou2 = 0;
-  cou3 = 0;
-  cou4 = 0;
-  cou5 = 0;
+  int mord, nord, pord, qord;
+  int sind, pind, qind, rind;
+  double N, Nj, lamh, fr;
+  double fri, frj, frk, frl;
+  double tol = 5E-4; // detuning parameter for IRs
+  double gam;
+  double m;
+  double sig;
+  double sigma, q, qdot, teng;
+  for_var f;
+  FILE *outfp, *outfp1;
+  char outfname[40];
+
+  cou1 = 0; cou2 = 0; cou3 = 0; cou4 = 0; cou5 = 0;
   for (j = 0; j < sc.nmax; j++) {
     for (i = 0; i < sc.mmax; i++) {
       gsl_matrix_set(s->modindmat, cou1, 0, i + 1);
@@ -48,29 +58,80 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
       cou1++;
     }
   }
+  s->SScou = cou2;
+  s->SAcou = cou3;
+  s->AScou = cou4;
+  s->AAcou = cou5;
 
-  int mord, nord, pord, qord;
-  int sind, pind, qind, rind;
-  double N, Nj, lamh, fr;
-  double fri, frj, frk, frl;
-  double tol = 5E-4; // detuning parameter for IRs
-  double gam;
-  double m;
-  double sig;
-  double sigma, q, qdot, teng;
-  FILE * outfp;
-  char outfname[40];
+  // File write !!
+  // modindmat file !!
+  outfp = fopen("modindmat.dat", "w");
+  for (i = 0; i < r.nmodes - 1; i++) {
+    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->modindmat, i, 0));
+    fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->modindmat, i, 1));
+  }
+  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->modindmat, i, 0));
+  fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->modindmat, i, 1));
+  fclose(outfp);
 
+  // modindvec file !!
+  outfp = fopen("modindvec.dat", "w");
+  for (i = 0; i < r.nmodes - 1; i++) {
+    fprintf(outfp, "%d\n", (int) gsl_vector_get(s->modindvec, i));
+  }
+  fprintf(outfp, "%d", (int) gsl_vector_get(s->modindvec, i));
+  fclose(outfp);
+
+  // SS modindvec file !!
+  outfp = fopen("SSmodindvec.dat", "w");
+  for (i = 0; i < s->SScou-1; i++) {
+    fprintf(outfp, "%d\n", (int) gsl_vector_get(s->SSmodindvec, i));
+  }
+  fprintf(outfp, "%d", (int) gsl_vector_get(s->SSmodindvec, i));
+  fclose(outfp);
+
+  // SA modindvec file !!
+  outfp = fopen("SAmodindvec.dat", "w");
+  for (i = 0; i < s->SAcou-1; i++) {
+    fprintf(outfp, "%d\n", (int) gsl_vector_get(s->SAmodindvec, i));
+  }
+  fprintf(outfp, "%d", (int) gsl_vector_get(s->SAmodindvec, i));
+  fclose(outfp);
+
+  // AS modindvec file !!
+  outfp = fopen("ASmodindvec.dat", "w");
+  for (i = 0; i < s->AScou-1; i++) {
+    fprintf(outfp, "%d\n", (int) gsl_vector_get(s->ASmodindvec, i));
+  }
+  fprintf(outfp, "%d", (int) gsl_vector_get(s->ASmodindvec, i));
+  fclose(outfp);
+
+  // AA modindvec file !!
+  outfp = fopen("AAmodindvec.dat", "w");
+  for (i = 0; i < s->AAcou-1; i++) {
+    fprintf(outfp, "%d\n", (int) gsl_vector_get(s->AAmodindvec, i));
+  }
+  fprintf(outfp, "%d", (int) gsl_vector_get(s->AAmodindvec, i));
+  fclose(outfp);
+
+  /**************************/
+  // frequency calculation !!
+  /**************************/
   for (i = 0; i < r.nmodes; i++) {
     mord = gsl_matrix_get(s->modindmat, i, 0);
     nord = gsl_matrix_get(s->modindmat, i, 1);
-
-    /**************************/
-    // frequency calculation !!
-    /**************************/
     fri = 1 / (2 * PI) * pow(pow(mord * PI / sc.Lx, 2.0) + pow(nord * PI / sc.Ly, 2.0), 0.5) * pow(2 * mc.Et * sv.e_pre / (mc.rho), 0.5);
     gsl_vector_set(s->frvec, i, fri);
   }
+
+  // File write !!
+  // frequency file !!
+  outfp = fopen("frvec.dat", "w");
+  for (i = 0; i < r.nmodes - 1; i++) {
+    fprintf(outfp, "%f\n", gsl_vector_get(s->frvec, i));
+  }
+  fprintf(outfp, "%f", gsl_vector_get(s->frvec, i));
+  fclose(outfp);
 
   /**************************/
   // Mode combinations leading
@@ -78,7 +139,6 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   // constants
   /**************************/
   ModeCombinations4NonZeroCouplingConstants(s, r);
-
 
   /**************************/
   // Mode combinations leading 
@@ -120,151 +180,25 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     // displacement and velocity initialization !!
     /**************************/
     sigma = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5);
-    // q         = gsl_ran_gaussian(gr, sigma);
-    q = 0.0;
+    q         = gsl_ran_gaussian(gr, sigma);
+    // q = 0.0;
+    // q = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5); 		// 1/2 total energy is stored as PE
     gsl_vector_set(s->qvec, i, q);
 
     sigma = pow(kB * sv.T / m, 0.5);
-    // qdot      = gsl_ran_gaussian(gr, sigma);
-    qdot = pow(kB * sv.T / m, 0.5); // 1/2 total energy is stored as KE
+    qdot      = gsl_ran_gaussian(gr, sigma);
+    // qdot = pow(kB * sv.T / m, 0.5); // 1/2 total energy is stored as KE
     gsl_vector_set(s->qdotvec, i, qdot);
+
   }
   // Initial perturbation of 20 KBT to mode 1
   gsl_vector_set(s->gamvec, 0, 0.0);
   gsl_vector_set(s->sigvec, 0, 0.0);
-  gsl_vector_set(s->qvec, 0, 0.0);
-  gsl_vector_set(s->qdotvec, 0, pow(20 * kB * sv.T / m, 0.5));
+  // gsl_vector_set(s->qvec, 0, pow(10 * kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5));
+  // gsl_vector_set(s->qdotvec, 0, pow(10 * kB * sv.T / m, 0.5));
 
-  /**************************/
-  // Writing in a file !!
-  /**************************/
-
-  // modindmat file !!
-  outfp = fopen("modindmat.dat", "w");
-  for (i = 0; i < r.nmodes - 1; i++) {
-    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->modindmat, i, 0));
-    fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->modindmat, i, 1));
-  }
-  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->modindmat, i, 0));
-  fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->modindmat, i, 1));
-  fclose(outfp);
-
-  // modindvec file !!
-  outfp = fopen("modindvec.dat", "w");
-  for (i = 0; i < r.nmodes - 1; i++) {
-    fprintf(outfp, "%d\n", (int) gsl_vector_get(s->modindvec, i));
-  }
-  fprintf(outfp, "%d", (int) gsl_vector_get(s->modindvec, i));
-  fclose(outfp);
-
-  // SS modindvec file !!
-  outfp = fopen("SSmodindvec.dat", "w");
-  for (i = 0; i < r.nmodes / 4 - 1; i++) {
-    fprintf(outfp, "%d\n", (int) gsl_vector_get(s->SSmodindvec, i));
-  }
-  fprintf(outfp, "%d", (int) gsl_vector_get(s->SSmodindvec, i));
-  fclose(outfp);
-
-  // SA modindvec file !!
-  outfp = fopen("SAmodindvec.dat", "w");
-  for (i = 0; i < r.nmodes / 4 - 1; i++) {
-    fprintf(outfp, "%d\n", (int) gsl_vector_get(s->SAmodindvec, i));
-  }
-  fprintf(outfp, "%d", (int) gsl_vector_get(s->SAmodindvec, i));
-  fclose(outfp);
-
-  // AS modindvec file !!
-  outfp = fopen("ASmodindvec.dat", "w");
-  for (i = 0; i < r.nmodes / 4 - 1; i++) {
-    fprintf(outfp, "%d\n", (int) gsl_vector_get(s->ASmodindvec, i));
-  }
-  fprintf(outfp, "%d", (int) gsl_vector_get(s->ASmodindvec, i));
-  fclose(outfp);
-
-  // AA modindvec file !!
-  outfp = fopen("AAmodindvec.dat", "w");
-  for (i = 0; i < r.nmodes / 4 - 1; i++) {
-    fprintf(outfp, "%d\n", (int) gsl_vector_get(s->AAmodindvec, i));
-  }
-  fprintf(outfp, "%d", (int) gsl_vector_get(s->AAmodindvec, i));
-  fclose(outfp);
-
-  // NZ comb file !!
-  outfp = fopen("NZs_pqrcombmat.dat", "w");
-  for (i = 0; i < s->NZcou - 1; i++) {
-    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->NZs_pqrcombmat, i, 0));
-    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->NZs_pqrcombmat, i, 1));
-    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->NZs_pqrcombmat, i, 2));
-    fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->NZs_pqrcombmat, i, 3));
-  }
-  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->NZs_pqrcombmat, i, 0));
-  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->NZs_pqrcombmat, i, 1));
-  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->NZs_pqrcombmat, i, 2));
-  fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->NZs_pqrcombmat, i, 3));
-  fclose(outfp);
-
-  // frequency file !!
-  outfp = fopen("frvec.dat", "w");
-  for (i = 0; i < r.nmodes - 1; i++) {
-    fprintf(outfp, "%f\n", gsl_vector_get(s->frvec, i));
-  }
-  fprintf(outfp, "%f", gsl_vector_get(s->frvec, i));
-  fclose(outfp);
-
-  // IR comb file !!
-  outfp = fopen("IRs_pqrcombmat.dat", "w");
-  for (i = 0; i < s->IRcou - 1; i++) {
-    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmat, i, 0));
-    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmat, i, 1));
-    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmat, i, 2));
-    fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcombmat, i, 3));
-  }
-  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmat, i, 0));
-  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmat, i, 1));
-  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmat, i, 2));
-  fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcombmat, i, 3));
-  fclose(outfp);
-
-  // IR comb sorted file !!
-  outfp = fopen("IRs_pqrcombmatsorted.dat", "w");
-  for (i = 0; i < s->IRcou - 1; i++) {
-    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 0));
-    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 1));
-    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 2));
-    fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 3));
-  }
-  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 0));
-  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 1));
-  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 2));
-  fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcombmatsorted, i, 3));
-  fclose(outfp);
-
-  // IR count file !!
-  outfp = fopen("IRs_pqrcountmat.dat", "w");
-  for (i = 0; i < s->NmodeIRcou - 1; i++) {
-    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 0));
-    fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 1));
-    fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 2));
-  }
-  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 0));
-  fprintf(outfp, "%d\t", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 1));
-  fprintf(outfp, "%d\n", (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 2));
-  fclose(outfp);
   
-  // coupling file !!
-  outfp = fopen("alphamat.dat", "w");
-  for (i = 0; i < s->IRcou - 1; i++) {
-    for (j = 0; j < 2 - 1; j++) {
-      fprintf(outfp, "%5.5e\t", gsl_matrix_get(s->alphamat, i, j));
-    }
-    fprintf(outfp, "%5.5e\n", gsl_matrix_get(s->alphamat, i, j));
-  }
-  for (j = 0; j < 2 - 1; j++) {
-    fprintf(outfp, "%5.5e\t", gsl_matrix_get(s->alphamat, i, j));
-  }
-  fprintf(outfp, "%5.5e\n", gsl_matrix_get(s->alphamat, i, j));
-  fclose(outfp);
-  
+  // File write !!
   // mass file !!
   outfp = fopen("mvec.dat", "w");
   for (i = 0; i < r.nmodes - 1; i++) {
@@ -290,36 +224,49 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   fprintf(outfp, "%5.5e", gsl_vector_get(s->sigvec, i));
   fclose(outfp);
 
-  // displacement and velocity files !!
+  // trajectory file !!
+  outfp1 = fopen("modetraj.txt", "w");
+  fprintf(outfp1, "%d\n", 0);
   double systeng = 0.0;
   for (i=0; i<s->NmodeIRcou; i++){
-    sind      = (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 0);
+  //for (i=0; i<4; i++){
+    sind      =  (int) gsl_matrix_get(s->IRs_pqrcountmat, i, 0);
     
-    sprintf(outfname, "modedisp.%04d.txt", sind);
-    outfp = fopen(outfname, "a");
-    fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qvec, sind-1));
-    fclose(outfp);
+    // sprintf(outfname, "modedisp.%04d.txt", sind);
+    // outfp = fopen(outfname, "w");
+    // fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qvec, sind-1));
+    // fclose(outfp);
 
-    sprintf(outfname, "modevelc.%04d.txt", sind);
-    outfp = fopen(outfname, "a");
-    fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qdotvec, sind-1));
-    fclose(outfp);
+    // sprintf(outfname, "modevelc.%04d.txt", sind);
+    // outfp = fopen(outfname, "w");
+    // fprintf(outfp, "%5.5e\n", gsl_vector_get(s->qdotvec, sind-1));
+    // fclose(outfp);
 
-    m = gsl_vector_get(s->mvec, sind-1);
-    fr = gsl_vector_get(s->frvec, sind-1);
-    teng = 0.5*m*gsl_vector_get(s->qdotvec, sind-1)*gsl_vector_get(s->qdotvec, sind-1) +
-      0.5*m*pow(2*PI*fr, 2.0)*gsl_vector_get(s->qvec, sind-1)*gsl_vector_get(s->qvec, sind-1);
+    // sprintf(outfname, "modeforc.%04d.txt", sind);
+    // outfp = fopen(outfname, "w");
+    // f = ForceSys(*s, r, i);
+    // gsl_vector_set(s->fvec, sind-1, f.f3);          // storing just the nonlinear part
+    // fprintf(outfp, "%5.5e\n", gsl_vector_get(s->fvec, sind-1));
+    // fclose(outfp);
+
+    q        = gsl_vector_get(s->qvec, sind-1);
+    qdot     = gsl_vector_get(s->qdotvec, sind-1);
+    f        = ForceSys(*s, r, i);
+    m        = gsl_vector_get(s->mvec, sind-1);
+    fr       = gsl_vector_get(s->frvec, sind-1);
+    teng     = 0.5*m*qdot*qdot + 0.5*m*2*PI*fr*2*PI*fr*q*q;
     systeng += teng;
 
-    sprintf(outfname, "modeteng.%04d.txt", sind);
-    outfp = fopen(outfname, "a");
-    fprintf(outfp, "%5.5e\n", teng);
-    fclose(outfp);
+    // sprintf(outfname, "modeteng.%04d.txt", sind);
+    // outfp = fopen(outfname, "w");
+    // fprintf(outfp, "%5.5e\n", teng);
+    // fclose(outfp);
+    fprintf(outfp1, "%d %5.5e %5.5e %5.5e %5.5e\n", sind, q, qdot, f.f3, teng);
   }
-  sprintf(outfname, "modetotteng.txt");
-  outfp = fopen(outfname, "a");
+  outfp = fopen("modetotteng.txt", "w");
   fprintf(outfp, "%5.5e\n", systeng);
   fclose(outfp);
+  fclose(outfp1);
 
   return;
 }

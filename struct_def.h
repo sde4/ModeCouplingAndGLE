@@ -40,7 +40,12 @@ typedef struct {
   gsl_vector    *mvec;
   gsl_vector    *qvec;
   gsl_vector    *qdotvec;
+  gsl_vector    *fvec;
   gsl_vector    *sigvec;
+  int           SScou;
+  int           SAcou;
+  int           AScou;
+  int           AAcou;
   int           NZcou;
   int           IRcou;
   int           NmodeIRcou;
@@ -76,5 +81,10 @@ typedef struct {
   double        hy;
   double 	gamunitconv;
   }             disc_const;
+  
+typedef struct {
+  double        f1;
+  double        f3;                       
+  }             for_var;
 
 #endif
