@@ -41,6 +41,7 @@ typedef struct {
   gsl_vector    *qvec;
   gsl_vector    *qdotvec;
   gsl_vector    *fvec;
+  gsl_vector    *enonvec;
   gsl_vector    *sigvec;
   int           SScou;
   int           SAcou;
@@ -85,6 +86,7 @@ typedef struct {
 typedef struct {
   double        f1;
   double        f3;                       
+  double        ep4;                       
   }             for_var;
 
 #endif

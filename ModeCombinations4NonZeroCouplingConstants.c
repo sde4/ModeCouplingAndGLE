@@ -173,11 +173,11 @@ void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
   // SS		SS	SA	SA 	24(12*2) combinations
   for (i=0; i<s->SScou; i++) {
     sind = (int) gsl_vector_get(s->SSmodindvec, i);
-    for (j=0; j<s->SScou; j++) {
+    for (j=i; j<s->SScou; j++) {
       pind = (int) gsl_vector_get(s->SSmodindvec, j);
       for (k=0; k<s->SAcou; k++) {
         qind = (int) gsl_vector_get(s->SAmodindvec, k);
-        for (l=0; l<s->SAcou; l++) {
+        for (l=k; l<s->SAcou; l++) {
           rind = (int) gsl_vector_get(s->SAmodindvec, l);
           if (pind!=sind && qind!=rind){
 
@@ -315,11 +315,11 @@ void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
   // SS		SS	AS	AS 	24(12*2) combinations
   for (i=0; i<s->SScou; i++) {
     sind = (int) gsl_vector_get(s->SSmodindvec, i);
-    for (j=0; j<s->SScou; j++) {
+    for (j=i; j<s->SScou; j++) {
       pind = (int) gsl_vector_get(s->SSmodindvec, j);
       for (k=0; k<s->AScou; k++) {
         qind = (int) gsl_vector_get(s->ASmodindvec, k);
-        for (l=0; l<s->AScou; l++) {
+        for (l=k; l<s->AScou; l++) {
           rind = (int) gsl_vector_get(s->ASmodindvec, l);
           if (pind!=sind && qind!=rind){
 
@@ -457,11 +457,11 @@ void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
   // SS		SS	AA	AA 	24(12*2) combinations
   for (i=0; i<s->SScou; i++) {
     sind = (int) gsl_vector_get(s->SSmodindvec, i);
-    for (j=0; j<s->SScou; j++) {
+    for (j=i; j<s->SScou; j++) {
       pind = (int) gsl_vector_get(s->SSmodindvec, j);
       for (k=0; k<s->AAcou; k++) {
         qind = (int) gsl_vector_get(s->AAmodindvec, k);
-        for (l=0; l<s->AAcou; l++) {
+        for (l=k; l<s->AAcou; l++) {
           rind = (int) gsl_vector_get(s->AAmodindvec, l);
           if (pind!=sind && qind!=rind){
 
@@ -599,11 +599,11 @@ void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
   // SA		SA	AS	AS 	24(12*2) combinations
   for (i=0; i<s->SAcou; i++) {
     sind = (int) gsl_vector_get(s->SAmodindvec, i);
-    for (j=0; j<s->SAcou; j++) {
+    for (j=i; j<s->SAcou; j++) {
       pind = (int) gsl_vector_get(s->SAmodindvec, j);
       for (k=0; k<s->AScou; k++) {
         qind = (int) gsl_vector_get(s->ASmodindvec, k);
-        for (l=0; l<s->AScou; l++) {
+        for (l=k; l<s->AScou; l++) {
           rind = (int) gsl_vector_get(s->ASmodindvec, l);
           if (pind!=sind && qind!=rind){
 
@@ -741,11 +741,11 @@ void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
   // SA		SA	AA	AA 	24(12*2) combinations
   for (i=0; i<s->SAcou; i++) {
     sind = (int) gsl_vector_get(s->SAmodindvec, i);
-    for (j=0; j<s->SAcou; j++) {
+    for (j=i; j<s->SAcou; j++) {
       pind = (int) gsl_vector_get(s->SAmodindvec, j);
       for (k=0; k<s->AAcou; k++) {
         qind = (int) gsl_vector_get(s->AAmodindvec, k);
-        for (l=0; l<s->AAcou; l++) {
+        for (l=k; l<s->AAcou; l++) {
           rind = (int) gsl_vector_get(s->AAmodindvec, l);
           if (pind!=sind && qind!=rind){
 
@@ -882,11 +882,11 @@ void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
   // AS		AS	AA	AA 	24(12*2) combinations
   for (i=0; i<s->AScou; i++) {
     sind = (int) gsl_vector_get(s->ASmodindvec, i);
-    for (j=0; j<s->AScou; j++) {
+    for (j=i; j<s->AScou; j++) {
       pind = (int) gsl_vector_get(s->ASmodindvec, j);
       for (k=0; k<s->AAcou; k++) {
         qind = (int) gsl_vector_get(s->AAmodindvec, k);
-        for (l=0; l<s->AAcou; l++) {
+        for (l=k; l<s->AAcou; l++) {
           rind = (int) gsl_vector_get(s->AAmodindvec, l);
           if (pind!=sind && qind!=rind){
 
@@ -1027,7 +1027,7 @@ void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
       pind = (int) gsl_vector_get(s->SSmodindvec, j);
       for (k=0; k<s->SAcou; k++) {
         qind = (int) gsl_vector_get(s->SAmodindvec, k);
-        for (l=0; l<s->SAcou; l++) {
+        for (l=k; l<s->SAcou; l++) {
           rind = (int) gsl_vector_get(s->SAmodindvec, l);
           if (pind==sind && qind!=rind){
 
@@ -1118,7 +1118,7 @@ void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
       pind = (int) gsl_vector_get(s->SSmodindvec, j);
       for (k=0; k<s->AScou; k++) {
         qind = (int) gsl_vector_get(s->ASmodindvec, k);
-        for (l=0; l<s->AScou; l++) {
+        for (l=k; l<s->AScou; l++) {
           rind = (int) gsl_vector_get(s->ASmodindvec, l);
           if (pind==sind && qind!=rind){
 
@@ -1209,7 +1209,7 @@ void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
       pind = (int) gsl_vector_get(s->SSmodindvec, j);
       for (k=0; k<s->AAcou; k++) {
         qind = (int) gsl_vector_get(s->AAmodindvec, k);
-        for (l=0; l<s->AAcou; l++) {
+        for (l=k; l<s->AAcou; l++) {
           rind = (int) gsl_vector_get(s->AAmodindvec, l);
           if (pind==sind && qind!=rind){
 
@@ -1300,7 +1300,7 @@ void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
       pind = (int) gsl_vector_get(s->SAmodindvec, j);
       for (k=0; k<s->AScou; k++) {
         qind = (int) gsl_vector_get(s->ASmodindvec, k);
-        for (l=0; l<s->AScou; l++) {
+        for (l=k; l<s->AScou; l++) {
           rind = (int) gsl_vector_get(s->ASmodindvec, l);
           if (pind==sind && qind!=rind){
 
@@ -1391,7 +1391,7 @@ void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
       pind = (int) gsl_vector_get(s->SAmodindvec, j);
       for (k=0; k<s->AAcou; k++) {
         qind = (int) gsl_vector_get(s->AAmodindvec, k);
-        for (l=0; l<s->AAcou; l++) {
+        for (l=k; l<s->AAcou; l++) {
           rind = (int) gsl_vector_get(s->AAmodindvec, l);
           if (pind==sind && qind!=rind){
 
@@ -1481,7 +1481,7 @@ void ModeCombinations4NonZeroCouplingConstants(sys_var * s, run_param r) {
       pind = (int) gsl_vector_get(s->ASmodindvec, j);
       for (k=0; k<s->AAcou; k++) {
         qind = (int) gsl_vector_get(s->AAmodindvec, k);
-        for (l=0; l<s->AAcou; l++) {
+        for (l=k; l<s->AAcou; l++) {
           rind = (int) gsl_vector_get(s->AAmodindvec, l);
           if (pind==sind && qind!=rind){
 

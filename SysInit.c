@@ -25,7 +25,7 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   double gam;
   double m;
   double sig;
-  double sigma, q, qdot, teng;
+  double sigma, q_t, qdot_t, f_t, teng;
   for_var f;
   FILE *outfp, *outfp1;
   char outfname[40];
@@ -179,16 +179,16 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     /**************************/
     // displacement and velocity initialization !!
     /**************************/
-    sigma = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5);
-    q         = gsl_ran_gaussian(gr, sigma);
-    // q = 0.0;
-    // q = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5); 		// 1/2 total energy is stored as PE
-    gsl_vector_set(s->qvec, i, q);
+    // sigma = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5);
+    // q_t         = gsl_ran_gaussian(gr, sigma);
+    q_t = 1E-4;
+    // q_t = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5); 			// 1/2 total energy is stored as PE
+    gsl_vector_set(s->qvec, i, q_t);
 
     sigma = pow(kB * sv.T / m, 0.5);
-    qdot      = gsl_ran_gaussian(gr, sigma);
-    // qdot = pow(kB * sv.T / m, 0.5); // 1/2 total energy is stored as KE
-    gsl_vector_set(s->qdotvec, i, qdot);
+    qdot_t      = gsl_ran_gaussian(gr, sigma);
+    // qdot_t = pow(kB * sv.T / m, 0.5); 						// 1/2 total energy is stored as KE
+    gsl_vector_set(s->qdotvec, i, qdot_t);
 
   }
   // Initial perturbation of 20 KBT to mode 1
@@ -249,19 +249,23 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     // fprintf(outfp, "%5.5e\n", gsl_vector_get(s->fvec, sind-1));
     // fclose(outfp);
 
-    q        = gsl_vector_get(s->qvec, sind-1);
-    qdot     = gsl_vector_get(s->qdotvec, sind-1);
+    q_t        = gsl_vector_get(s->qvec, sind-1);
+    qdot_t     = gsl_vector_get(s->qdotvec, sind-1);
     f        = ForceSys(*s, r, i);
+    gsl_vector_set (s->fvec, sind-1, f.f1+f.f3);                                // writing just the nonlinear part
+    f_t      = gsl_vector_get (s->fvec, sind-1)/q_t;
+    // f_t      = pow(-gsl_vector_get (s->fvec, sind-1)/q_t, 0.5)/(2*PI);
+    gsl_vector_set (s->enonvec, sind-1, f.ep4);
     m        = gsl_vector_get(s->mvec, sind-1);
     fr       = gsl_vector_get(s->frvec, sind-1);
-    teng     = 0.5*m*qdot*qdot + 0.5*m*2*PI*fr*2*PI*fr*q*q;
+    teng     = 0.5*m*qdot_t*qdot_t + 0.5*m*2*PI*fr*2*PI*fr*q_t*q_t + m*gsl_vector_get(s->enonvec, sind-1);
     systeng += teng;
 
     // sprintf(outfname, "modeteng.%04d.txt", sind);
     // outfp = fopen(outfname, "w");
     // fprintf(outfp, "%5.5e\n", teng);
     // fclose(outfp);
-    fprintf(outfp1, "%d %5.5e %5.5e %5.5e %5.5e\n", sind, q, qdot, f.f3, teng);
+    fprintf(outfp1, "%d %5.5e %5.5e %5.5e %5.5e\n", sind, q_t, qdot_t, f_t, teng);
   }
   outfp = fopen("modetotteng.txt", "w");
   fprintf(outfp, "%5.5e\n", systeng);

@@ -58,9 +58,9 @@ int 	main(int argc, char* argv[])
   sv.e_pre            = 1E-4;
 
   // Run Parameters !!
-  r.dt                = 0.005;                                // ns
-  r.runtime           = 2E6;                                  // ns
-  r.nfreq             = 200;
+  r.dt                = 0.001;                                // ns
+  r.runtime           = 100;                                  // ns
+  r.nfreq             = 100;
   r.nmodes            = sc.mmax*sc.nmax;   
 
   // Discretization Constants !!
@@ -91,6 +91,7 @@ int 	main(int argc, char* argv[])
   s.qvec              = gsl_vector_alloc(r.nmodes);
   s.qdotvec           = gsl_vector_alloc(r.nmodes);
   s.fvec              = gsl_vector_alloc(r.nmodes);
+  s.enonvec           = gsl_vector_alloc(r.nmodes);
   s.sigvec            = gsl_vector_alloc(r.nmodes);
 
 
