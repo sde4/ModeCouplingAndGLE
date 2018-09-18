@@ -18,9 +18,9 @@ int 	main(int argc, char* argv[])
 
   printf("# Langevin dynamics simulator for coupled modes started ...\n\n");
   
-  if (argc!=6) 
+  if (argc!=9) 
   {
-   printf("ERROR: specify four arguments: 1. mmax 2. nmax 3. gam 4. Init(0)/Read(1) 5. seed \n");
+   printf("ERROR: specify four arguments: 1. mmax  2. nmax  3. timestep (ns)  4. temp (K)  5. gam  6. tol  7. Init(0)/Read(1)  8. seed \n");
    exit(1);
   }
 
@@ -31,7 +31,7 @@ int 	main(int argc, char* argv[])
   state_var sv;
   sys_const sc;
   disc_const dc;
-  int seed 	      = atoi(argv[5]); 
+  int seed 	      = atoi(argv[8]); 
 
   // system constants !!
 
@@ -50,17 +50,17 @@ int 	main(int argc, char* argv[])
   mc.Et               = 340*Npm_eVpA2;                        // eV/A^2
   mc.DEt              = 40*Npm_eVpA2;                         // eV/A^2
   mc.rho              = 7.4E-7*kgpm2_amupA2*amuA2pns2_eV;     // eV/(A^4/ns^2)
-  mc.gam 	      = atof(argv[3]);			                  // 1/ns
+  mc.gam 	      = atof(argv[5]);			                  // 1/ns
   // mc.alpha            = atof(argv[4]);
 
   // State variables !!
-  sv.T                = 300;                                  // K
+  sv.T                = atof(argv[4]);                        // K
   sv.e_pre            = 1E-4;
 
   // Run Parameters !!
-  r.dt                = 0.001;                                // ns
-  r.runtime           = 100;                                  // ns
-  r.nfreq             = 100;
+  r.dt                = atof(argv[3]);                        // ns
+  r.runtime           = 1E6;                                  // ns
+  r.nfreq             = 20;
   r.nmodes            = sc.mmax*sc.nmax;   
 
   // Discretization Constants !!
@@ -72,10 +72,6 @@ int 	main(int argc, char* argv[])
   dc.hy 	      = dc.Ly/(dc.Nfy-1.0); 	 	     // um - using different unit of length for discretization
   dc.gamunitconv      = 1.0/pow(1E4, 4.0);		     // Unit of gam is L^-4 - um^-4: convert to A^-4
 
-  const char *mode[2];
-  mode[0] = "Init";
-  mode[1] = "Read";
-  printf("# No. of modes: %d  gam: %f Mode: %s seed: %d \n", r.nmodes, mc.gam, mode[atoi(argv[4])], seed);
 
   /* System initialization */
   s.modindmat         = gsl_matrix_alloc(r.nmodes, 2);
@@ -93,7 +89,12 @@ int 	main(int argc, char* argv[])
   s.fvec              = gsl_vector_alloc(r.nmodes);
   s.enonvec           = gsl_vector_alloc(r.nmodes);
   s.sigvec            = gsl_vector_alloc(r.nmodes);
+  s.tol 	      = atof(argv[6]);			   // detuning parameter for IRs
 
+  const char *mode[2];
+  mode[0] = "Init";
+  mode[1] = "Read";
+  printf("# No. of modes: %d\n# dumpstep: 	  %lf\n# temp: 	  %lf\n# gam: 	  %lf\n# tol: 	  %lf\n# mode: 	  %s\n# seed: 	  %d\n",r.nmodes, r.dt*r.nfreq, sv.T, mc.gam, s.tol, mode[atoi(argv[7])], seed);
 
   // Random number initialization
   const gsl_rng_type * gT;
@@ -103,7 +104,7 @@ int 	main(int argc, char* argv[])
   gr    = gsl_rng_alloc(gT);
 
   // System Initialization
-  if (atoi(argv[4])==0)
+  if (atoi(argv[7])==0)
     SysInit(&s, r, mc, sv, sc, dc, gr);
   else 
     SysRead(&s, r, mc, sv, sc, dc, gr);

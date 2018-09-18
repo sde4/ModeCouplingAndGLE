@@ -8,9 +8,9 @@ int* CreateIntVector(int dim1)
   return calloc((unsigned int) dim1, sizeof(unsigned int));
 }
 
-float* CreateVector(int dim1)
+double* CreateVector(int dim1)
 {
-  return calloc((unsigned int) dim1, sizeof(float));
+  return calloc((unsigned int) dim1, sizeof(double));
 }
 
 int** CreateIntMatrix(int dim1, int dim2)
@@ -25,29 +25,29 @@ int** CreateIntMatrix(int dim1, int dim2)
   return m;
 }
 
-float**	CreateMatrix(int dim1, int dim2)
+double**	CreateMatrix(int dim1, int dim2)
 {
   int      i;
-  float    **m;
-  m = calloc((unsigned int) dim1, sizeof(float *));
+  double    **m;
+  m = calloc((unsigned int) dim1, sizeof(double *));
   for (i=0; i<dim1; i++)
   {
-    m[i] = calloc((unsigned int) dim2, sizeof(float));
+    m[i] = calloc((unsigned int) dim2, sizeof(double));
   }
   return m;
 }
 
-float*** CreateMatrix3D(int dim1, int dim2, int dim3)
+double*** CreateMatrix3D(int dim1, int dim2, int dim3)
 {
   int      i, j;
-  float    ***m;
-  m = calloc((unsigned int) dim1, sizeof(float **));
+  double    ***m;
+  m = calloc((unsigned int) dim1, sizeof(double **));
   for (i=0; i<dim1; i++)
   {
-    m[i] = calloc((unsigned int) dim2, sizeof(float *));
+    m[i] = calloc((unsigned int) dim2, sizeof(double *));
     for (j=0; j<dim2; j++)
     {
-      m[i][j] = calloc((unsigned int) dim3, sizeof(float));
+      m[i][j] = calloc((unsigned int) dim3, sizeof(double));
     }
   }
   return m;
@@ -63,7 +63,7 @@ void FreeIntMatrix(int **m)
   free(m);
 }
 
-void FreeMatrix(float **m)
+void FreeMatrix(double **m)
 {
   int      i;
   for (i=0; m[i]!=NULL; i++)

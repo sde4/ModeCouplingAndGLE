@@ -16,10 +16,10 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr, state_var sv)
 {
 
   int     j, k, sind;
-  float   *xi, *thet;
-  float   fr, *gam, m, *sig, sigma;
-  float   q_t, *qdot_t, *c_t, *f_t, *q_tp1, qdot_tp1, f_tp1;
-  float   teng;
+  double   *xi, *thet;
+  double   fr, *gam, m, *sig, sigma;
+  double   q_t, *qdot_t, *c_t, *f_t, *q_tp1, qdot_tp1, f_tp1;
+  double   teng;
   for_var f;
   FILE    *outfp, *outfp1;
   char    outfname[40];
@@ -64,7 +64,7 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr, state_var sv)
     /*
     // randomizing the displacements
     if (sind!=1){
-    fr   ``	   = gsl_vector_get(s->frvec, j);
+    fr   	   = gsl_vector_get(s->frvec, j);
     m 		   = gsl_vector_get(s->mvec, j);
     sigma 	   = pow(kB * sv.T / (m * pow(2 * PI * fr, 2.0)), 0.5);
     q_tp1 	   = gsl_ran_gaussian(gr, sigma);
@@ -138,12 +138,12 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr, state_var sv)
 
       q_t      = gsl_vector_get(s->qvec, sind-1);
       qdot_tp1 = gsl_vector_get(s->qdotvec, sind-1);
-      f_tp1    = gsl_vector_get (s->fvec, sind-1)/q_t;
+      f_tp1    = gsl_vector_get (s->fvec, sind-1); ///q_t;
       // f_tp1    = pow(-gsl_vector_get (s->fvec, sind-1)/q_t, 0.5)/(2*PI);
       m        = gsl_vector_get(s->mvec, sind-1);
       fr       = gsl_vector_get(s->frvec, sind-1);
       teng     = 0.5*m*qdot_tp1*qdot_tp1 + 0.5*m*2*PI*fr*2*PI*fr*q_t*q_t;
-      systeng += teng +  m*gsl_vector_get(s->enonvec, sind-1);
+      systeng += teng + m*gsl_vector_get(s->enonvec, sind-1);
 
       // sprintf(outfname, "modeteng.%04d.txt", sind);
       // outfp = fopen(outfname, "a");

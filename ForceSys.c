@@ -42,7 +42,7 @@ for_var	ForceSys(sys_var s, run_param r, int j)
     q_q   = gsl_vector_get(s.qvec, qind-1);
     q_r   = gsl_vector_get(s.qvec, rind-1);
 		
-    alpha = gsl_matrix_get(s.alphamat, cou2, 0)*mult;
+    alpha = gsl_matrix_get(s.alphamatsorted, cou2, 0)*mult;
     f.f3  = f.f3 - alpha*q_p*q_q*q_r;
     f.ep4 = f.ep4 + alpha*q_p*q_q*q_r*q_s/4.0;
     // }

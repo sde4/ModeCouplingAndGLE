@@ -31,7 +31,7 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   /**************************/
 
   printf("#    o Input file required: 1. frvec.dat 2. IRs_pqrcombmatsorted.dat\n");
-  printf("#                           3. IRs_pqrcountmat.dat 4. alphamat.dat\n");
+  printf("#                           3. IRs_pqrcountmat.dat 4. alphamatsorted.dat\n");
   printf("#                           5. mvec.dat\n");
   // check for the required input files
 
@@ -50,7 +50,7 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
      printf("#      ERROR: File 3 not found! \n");
      exit(1);
   }
-  if ((infp=fopen("alphamat.dat", "r")) == NULL) 
+  if ((infp=fopen("alphamatsorted.dat", "r")) == NULL) 
   {
      printf("#      ERROR: File 4 not found! \n");
      exit(1);
@@ -151,12 +151,12 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   fclose(infp);
   
   // coupling file !!
-  s->alphamat  	  	  = gsl_matrix_alloc(s->IRcou, 2);
-  infp = fopen("alphamat.dat", "r");
+  s->alphamatsorted  	  	  = gsl_matrix_alloc(s->IRcou, 2);
+  infp = fopen("alphamatsorted.dat", "r");
   for (i = 0; i < s->IRcou; i++) {
     for (j = 0; j < 2; j++) {
       fscanf(infp, "%lf", &fdat);
-      gsl_matrix_set(s->alphamat, i, j, fdat);
+      gsl_matrix_set(s->alphamatsorted, i, j, fdat);
     }
   }
   fclose(infp);
@@ -186,16 +186,16 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     // displacement and velocity 
     // initialization !!
     /**************************/
-    sigma = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5);
-    q_t         = gsl_ran_gaussian(gr, sigma);
-    // q_t = 1E-4;
+    // sigma = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5);
+    // q_t         = gsl_ran_gaussian(gr, sigma);
+    q_t = 0.0;
     // q_t = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5); 		// 1/2 total energy is stored as PE
     gsl_vector_set(s->qvec, i, q_t);
 
     // sigma = pow(kB * sv.T / m, 0.5);
     // qdot_t      = gsl_ran_gaussian(gr, sigma);
-    qdot_t = 0.0;
-    // qdot_t = pow(kB * sv.T / m, 0.5); 					// 1/2 total energy is stored as KE
+    // qdot_t = 0.0;
+    qdot_t = pow(kB * sv.T / m, 0.5); 					// 1/2 total energy is stored as KE
     gsl_vector_set(s->qdotvec, i, qdot_t);
 
   }
@@ -257,13 +257,13 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     qdot_t     = gsl_vector_get(s->qdotvec, sind-1);
     f        = ForceSys(*s, r, i);
     gsl_vector_set (s->fvec, sind-1, f.f1+f.f3);                                // writing just the nonlinear part
-    f_t      = gsl_vector_get (s->fvec, sind-1)/q_t;
+    f_t      = gsl_vector_get (s->fvec, sind-1); ///q_t;
     // f_t      = pow(-gsl_vector_get (s->fvec, sind-1)/q_t, 0.5)/(2*PI);
     gsl_vector_set (s->enonvec, sind-1, f.ep4);
     m        = gsl_vector_get(s->mvec, sind-1);
     fr       = gsl_vector_get(s->frvec, sind-1);
-    teng     = 0.5*m*qdot_t*qdot_t + 0.5*m*2*PI*fr*2*PI*fr*q_t*q_t + m*gsl_vector_get(s->enonvec, sind-1);
-    systeng += teng;
+    teng     = 0.5*m*qdot_t*qdot_t + 0.5*m*2*PI*fr*2*PI*fr*q_t*q_t;
+    systeng += teng + m*gsl_vector_get(s->enonvec, sind-1);
 
     // sprintf(outfname, "modeteng.%04d.txt", sind);
     // outfp = fopen(outfname, "w");

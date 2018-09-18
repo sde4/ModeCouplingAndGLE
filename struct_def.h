@@ -8,7 +8,7 @@
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
-#define PI            3.1415926535
+#define PI            3.14159265358979323846
 #define kB            8.6173303E-5            // eV/K
 #define Npm_eVpA2     0.0624150912
 #define kgpm2_amupA2  6.022E6
@@ -31,11 +31,10 @@ typedef struct {
   gsl_vector    *ASmodindvec;
   gsl_vector    *AAmodindvec;
   gsl_vector    *frvec;
-  gsl_matrix    *NZs_pqrcombmat;
-  gsl_matrix    *IRs_pqrcombmat;
   gsl_matrix    *IRs_pqrcombmatsorted;
   gsl_matrix    *IRs_pqrcountmat;
-  gsl_matrix    *alphamat;
+  gsl_matrix    *alphamatsorted;
+  gsl_vector    *detuningsorted;
   gsl_vector    *gamvec;
   gsl_vector    *mvec;
   gsl_vector    *qvec;
@@ -50,6 +49,7 @@ typedef struct {
   int           NZcou;
   int           IRcou;
   int           NmodeIRcou;
+  double 	tol;
   }             sys_var;
 
 typedef struct {

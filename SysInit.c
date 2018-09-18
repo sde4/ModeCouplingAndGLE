@@ -9,7 +9,7 @@
 
 /* Definitions for routines */
 void ModeCombinations4NonZeroCouplingConstants(sys_var* , run_param );
-void ModeCombinations4InternalResonance(sys_var* , double );
+void ModeCombinations4InternalResonance(sys_var* );
 void ThirdOrderCouplingCalculation(sys_var* , mat_const , disc_const );
 for_var ForceSys(sys_var , run_param , int );
 
@@ -21,7 +21,6 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   int sind, pind, qind, rind;
   double N, Nj, lamh, fr;
   double fri, frj, frk, frl;
-  double tol = 5E-4; // detuning parameter for IRs
   double gam;
   double m;
   double sig;
@@ -144,7 +143,7 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   // Mode combinations leading 
   // to Internal resonances!
   /**************************/
-  ModeCombinations4InternalResonance(s, tol);
+  ModeCombinations4InternalResonance(s);
 
   /**************************/
   // Third order coupling 
@@ -181,13 +180,13 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     /**************************/
     // sigma = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5);
     // q_t         = gsl_ran_gaussian(gr, sigma);
-    q_t = 1E-4;
+    q_t = 0.0;
     // q_t = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5); 			// 1/2 total energy is stored as PE
     gsl_vector_set(s->qvec, i, q_t);
 
-    sigma = pow(kB * sv.T / m, 0.5);
-    qdot_t      = gsl_ran_gaussian(gr, sigma);
-    // qdot_t = pow(kB * sv.T / m, 0.5); 						// 1/2 total energy is stored as KE
+    // sigma = pow(kB * sv.T / m, 0.5);
+    // qdot_t      = gsl_ran_gaussian(gr, sigma);
+    qdot_t = pow(kB * sv.T / m, 0.5); 						// 1/2 total energy is stored as KE
     gsl_vector_set(s->qdotvec, i, qdot_t);
 
   }
