@@ -24,7 +24,7 @@ void ThirdOrderCouplingCalculation(sys_var* s, mat_const mc, disc_const dc) {
   int sind, pind, qind, rind, tsind;
   int idat, idat1, idat2;
   int mords, nords, mordp, nordp, mordq, nordq, mordr, nordr;
-
+  int NF;
   double fdat, fdat1, fdat2, fdat3;
   double gams_pqr, Hn_pq, Hn_rs, xeta_n4, norm2D;
 
@@ -43,7 +43,7 @@ void ThirdOrderCouplingCalculation(sys_var* s, mat_const mc, disc_const dc) {
   // for (i = 0; i < s->IRcou; i++){
   //   gsl_matrix_set(alphamat, i, 0, 0.0);
   // }
-
+  
   gsl_vector *phi_s, *phi_p, *phi_q, *phi_r, *psi_n;
 
   // First compute the eigen vectors and eigen values of the 
@@ -107,6 +107,7 @@ void ThirdOrderCouplingCalculation(sys_var* s, mat_const mc, disc_const dc) {
     }
   }
 
+  NF = 625; // Note: NF is not set to Nfx*Nfy
   #pragma omp parallel for private(i,sind,pind,qind,rind,idat,fdat,mords,nords,phi_s,norm2D,mordp,nordp,phi_p,mordq,nordq,phi_q,mordr,nordr,phi_r,gams_pqr,n,psi_n,xeta_n4,Hn_pq,Hn_rs,j)
   for (i=0; i<s->IRcou; i++){
     // printf("Thread %d is doing iteration %d.\n", omp_get_thread_num( ), i);
@@ -150,7 +151,7 @@ void ThirdOrderCouplingCalculation(sys_var* s, mat_const mc, disc_const dc) {
       gsl_vector_scale (phi_r, 1.0/norm2D);
   
       gams_pqr = 0.0;
-      for (n= 3; n < dc.Nfx*dc.Nfy; n++){				//excluding first 3 with zero eigen values
+      for (n= 3; n < NF; n++){				//excluding first 3 with zero eigen values
         gsl_matrix_get_col (psi_n, Fevec, n);
         norm2D  = gsl_blas_dnrm2(psi_n)*pow(dc.hx*dc.hy, 0.5);
         gsl_vector_scale (psi_n, 1.0/norm2D);

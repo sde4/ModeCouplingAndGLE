@@ -19,7 +19,6 @@ typedef struct {
   double        runtime;                       // ns
   int           nfreq;
   int           nmodes;
-  int           step;
   int           nsteps;
   }             run_param;
 
@@ -50,9 +49,14 @@ typedef struct {
   int           IRcou;
   int           NmodeIRcou;
   double 	tol;
+  int           systyp;
+  int           statetyp;
+  int           istep;
+  int           step;
   }             sys_var;
 
 typedef struct {
+  double        kb;                           // eV
   double        Et;                           // eV/A^2
   double        DEt;                          // eV/A^2
   double        rho;                          // eV/(A^4/ns^2)
@@ -66,8 +70,8 @@ typedef struct {
   }             state_var;
 
 typedef struct {
-  int           mmax;
-  int           nmax;
+  int           max;
+  // int           nmax;
   double        Lx;
   double        Ly;
   int           run_id;

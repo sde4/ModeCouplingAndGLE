@@ -104,16 +104,17 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr, state_var sv)
   free(f_t);
 
   // Writing in a file !!
-  if ((r.step)%r.nfreq==0) 
+  if ((s->step)%r.nfreq==0) 
   {
-    printf("# STEP %10d OF %10d IS %2.2f \%\n", r.step, r.nsteps, (float) r.step*100.0/r.nsteps);
+    printf("# STEP %10d OF %10d IS %2.2f \%\n", s->step, r.nsteps, (float) ((s->step)- (s->istep))*100.0/((r.nsteps)-(s->istep)));
     // outfp = fopen("modenormaldist.txt", "a");
     // fprintf(outfp, "%f\t%f\n", xi, thet);
     // fclose(outfp);
     
     // trajectory file !!
-    outfp1 = fopen("modetraj.txt", "a");
-    fprintf(outfp1, "%d\n", r.step);
+    sprintf(outfname, "modetraj.%d.txt", s->statetyp);
+    outfp1 = fopen(outfname, "a");
+    fprintf(outfp1, "%d\n", s->step);
     double systeng = 0.0;
     for (j=0; j<s->NmodeIRcou; j++){
     //for (j=0; j<4; j++){
@@ -152,15 +153,16 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr, state_var sv)
       fprintf(outfp1, "%d %5.5e %5.5e %5.5e %5.5e\n", sind, q_t, qdot_tp1, f_tp1, teng);
 
 
-      // sprintf(outfname, "modenormaldist.1.txt", r.step);
+      // sprintf(outfname, "modenormaldist.1.txt", s->step);
       // outfp = fopen(outfname, "a");
       // fprintf(outfp, "%f\t%f\n", xi, thet);
       // fclose(outfp); 
     }
-    outfp = fopen("modetotteng.txt", "a");
+    fclose(outfp1);
+    sprintf(outfname, "modetotteng.%d.txt", s->statetyp);
+    outfp = fopen(outfname, "a");
     fprintf(outfp, "%5.5e\n", systeng);
     fclose(outfp);
-    fclose(outfp1);
   }
 
   return;

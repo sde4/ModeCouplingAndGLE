@@ -35,6 +35,214 @@ double GalerkinProj(gsl_vector* A, gsl_vector* B, gsl_vector* C, disc_const dc){
     }
   }
 
+  for (j = 0; j < 1; j++){
+    for (i = 0; i < 1; i++){
+      delxxB      = 1.0/dc.hx/dc.hx*( gsl_vector_get(B, (i+1)+(j)*dc.Nfx) + gsl_vector_get(B, (0)+(j)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxxC      = 1.0/dc.hx/dc.hx*( gsl_vector_get(C, (i+1)+(j)*dc.Nfx) + gsl_vector_get(C, (0)+(j)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      
+      delyyC      = 1.0/dc.hy/dc.hy*( gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(0)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      delyyB      = 1.0/dc.hy/dc.hy*( gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(0)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      
+      delxpypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i+1)+(j+1)*dc.Nfx) - gsl_vector_get(B, (i+1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i+1)+(j+1)*dc.Nfx) - gsl_vector_get(C, (i+1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (0)+(0)*dc.Nfx) - gsl_vector_get(B, (0)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(0)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (0)+(0)*dc.Nfx) - gsl_vector_get(C, (0)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(0)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxpymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i+1)+(0)*dc.Nfx) - gsl_vector_get(B, (i+1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(0)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i+1)+(0)*dc.Nfx) - gsl_vector_get(C, (i+1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(0)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (0)+(j+1)*dc.Nfx) - gsl_vector_get(B, (0)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (0)+(j+1)*dc.Nfx) - gsl_vector_get(C, (0)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      LijBC       = delxxB*delyyC + delyyB*delxxC + -1.0/2.0*( delxpypB*delxpypC + delxmymB*delxmymC + delxmypB*delxmypC + delxpymB*delxpymC);
+      H 	  = H + dc.hx*dc.hy*gsl_vector_get(A, (i)+(j)*dc.Nfx)*LijBC;
+
+    }
+  }
+
+  for (j = 0; j < 1; j++){
+    for (i = 1; i < dc.Nfx-1; i++){
+      delxxB      = 1.0/dc.hx/dc.hx*( gsl_vector_get(B, (i+1)+(j)*dc.Nfx) + gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxxC      = 1.0/dc.hx/dc.hx*( gsl_vector_get(C, (i+1)+(j)*dc.Nfx) + gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      
+      delyyC      = 1.0/dc.hy/dc.hy*( gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(0)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      delyyB      = 1.0/dc.hy/dc.hy*( gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(0)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      
+      delxpypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i+1)+(j+1)*dc.Nfx) - gsl_vector_get(B, (i+1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i+1)+(j+1)*dc.Nfx) - gsl_vector_get(C, (i+1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i-1)+(0)*dc.Nfx) - gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(0)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i-1)+(0)*dc.Nfx) - gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(0)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxpymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i+1)+(0)*dc.Nfx) - gsl_vector_get(B, (i+1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(0)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i+1)+(0)*dc.Nfx) - gsl_vector_get(C, (i+1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(0)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i-1)+(j+1)*dc.Nfx) - gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i-1)+(j+1)*dc.Nfx) - gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      LijBC       = delxxB*delyyC + delyyB*delxxC + -1.0/2.0*( delxpypB*delxpypC + delxmymB*delxmymC + delxmypB*delxmypC + delxpymB*delxpymC);
+      H 	  = H + dc.hx*dc.hy*gsl_vector_get(A, (i)+(j)*dc.Nfx)*LijBC;
+
+    }
+  }
+
+  for (j = 0; j < 1; j++){
+    for (i = dc.Nfx-1; i < dc.Nfx; i++){
+      delxxB      = 1.0/dc.hx/dc.hx*( gsl_vector_get(B, (dc.Nfx-1)+(j)*dc.Nfx) + gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxxC      = 1.0/dc.hx/dc.hx*( gsl_vector_get(C, (dc.Nfx-1)+(j)*dc.Nfx) + gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      
+      delyyC      = 1.0/dc.hy/dc.hy*( gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(0)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      delyyB      = 1.0/dc.hy/dc.hy*( gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(0)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      
+      delxpypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (dc.Nfx-1)+(j+1)*dc.Nfx) - gsl_vector_get(B, (dc.Nfx-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (dc.Nfx-1)+(j+1)*dc.Nfx) - gsl_vector_get(C, (dc.Nfx-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i-1)+(0)*dc.Nfx) - gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(0)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i-1)+(0)*dc.Nfx) - gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(0)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxpymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (dc.Nfx-1)+(0)*dc.Nfx) - gsl_vector_get(B, (dc.Nfx-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(0)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (dc.Nfx-1)+(0)*dc.Nfx) - gsl_vector_get(C, (dc.Nfx-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(0)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i-1)+(j+1)*dc.Nfx) - gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i-1)+(j+1)*dc.Nfx) - gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      LijBC       = delxxB*delyyC + delyyB*delxxC + -1.0/2.0*( delxpypB*delxpypC + delxmymB*delxmymC + delxmypB*delxmypC + delxpymB*delxpymC);
+      H 	  = H + dc.hx*dc.hy*gsl_vector_get(A, (i)+(j)*dc.Nfx)*LijBC;
+
+    }
+  }
+
+  for (j = 1; j < dc.Nfy-1; j++){
+    for (i = 0; i < 1; i++){
+      delxxB      = 1.0/dc.hx/dc.hx*( gsl_vector_get(B, (i+1)+(j)*dc.Nfx) + gsl_vector_get(B, (0)+(j)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxxC      = 1.0/dc.hx/dc.hx*( gsl_vector_get(C, (i+1)+(j)*dc.Nfx) + gsl_vector_get(C, (0)+(j)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      
+      delyyC      = 1.0/dc.hy/dc.hy*( gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(j-1)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      delyyB      = 1.0/dc.hy/dc.hy*( gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(j-1)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      
+      delxpypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i+1)+(j+1)*dc.Nfx) - gsl_vector_get(B, (i+1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i+1)+(j+1)*dc.Nfx) - gsl_vector_get(C, (i+1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (0)+(j-1)*dc.Nfx) - gsl_vector_get(B, (0)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (0)+(j-1)*dc.Nfx) - gsl_vector_get(C, (0)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxpymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i+1)+(j-1)*dc.Nfx) - gsl_vector_get(B, (i+1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i+1)+(j-1)*dc.Nfx) - gsl_vector_get(C, (i+1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (0)+(j+1)*dc.Nfx) - gsl_vector_get(B, (0)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (0)+(j+1)*dc.Nfx) - gsl_vector_get(C, (0)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      LijBC       = delxxB*delyyC + delyyB*delxxC + -1.0/2.0*( delxpypB*delxpypC + delxmymB*delxmymC + delxmypB*delxmypC + delxpymB*delxpymC);
+      H 	  = H + dc.hx*dc.hy*gsl_vector_get(A, (i)+(j)*dc.Nfx)*LijBC;
+
+    }
+  }
+
+  for (j = 1; j < dc.Nfy-1; j++){
+    for (i = dc.Nfx-1; i < dc.Nfx; i++){
+      delxxB      = 1.0/dc.hx/dc.hx*( gsl_vector_get(B, (dc.Nfx-1)+(j)*dc.Nfx) + gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxxC      = 1.0/dc.hx/dc.hx*( gsl_vector_get(C, (dc.Nfx-1)+(j)*dc.Nfx) + gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      
+      delyyC      = 1.0/dc.hy/dc.hy*( gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(j-1)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      delyyB      = 1.0/dc.hy/dc.hy*( gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(j-1)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      
+      delxpypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (dc.Nfx-1)+(j+1)*dc.Nfx) - gsl_vector_get(B, (dc.Nfx-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (dc.Nfx-1)+(j+1)*dc.Nfx) - gsl_vector_get(C, (dc.Nfx-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i-1)+(j-1)*dc.Nfx) - gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i-1)+(j-1)*dc.Nfx) - gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxpymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (dc.Nfx-1)+(j-1)*dc.Nfx) - gsl_vector_get(B, (dc.Nfx-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (dc.Nfx-1)+(j-1)*dc.Nfx) - gsl_vector_get(C, (dc.Nfx-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i-1)+(j+1)*dc.Nfx) - gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j+1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i-1)+(j+1)*dc.Nfx) - gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j+1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      LijBC       = delxxB*delyyC + delyyB*delxxC + -1.0/2.0*( delxpypB*delxpypC + delxmymB*delxmymC + delxmypB*delxmypC + delxpymB*delxpymC);
+      H 	  = H + dc.hx*dc.hy*gsl_vector_get(A, (i)+(j)*dc.Nfx)*LijBC;
+
+    }
+  }
+
+  for (j = dc.Nfy-1; j < dc.Nfy; j++){
+    for (i = 0; i < 1; i++){
+      delxxB      = 1.0/dc.hx/dc.hx*( gsl_vector_get(B, (i+1)+(j)*dc.Nfx) + gsl_vector_get(B, (0)+(j)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxxC      = 1.0/dc.hx/dc.hx*( gsl_vector_get(C, (i+1)+(j)*dc.Nfx) + gsl_vector_get(C, (0)+(j)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      
+      delyyC      = 1.0/dc.hy/dc.hy*( gsl_vector_get(C, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j-1)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      delyyB      = 1.0/dc.hy/dc.hy*( gsl_vector_get(B, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j-1)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      
+      delxpypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i+1)+(dc.Nfy-1)*dc.Nfx) - gsl_vector_get(B, (i+1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i+1)+(dc.Nfy-1)*dc.Nfx) - gsl_vector_get(C, (i+1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (0)+(j-1)*dc.Nfx) - gsl_vector_get(B, (0)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (0)+(j-1)*dc.Nfx) - gsl_vector_get(C, (0)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxpymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i+1)+(j-1)*dc.Nfx) - gsl_vector_get(B, (i+1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i+1)+(j-1)*dc.Nfx) - gsl_vector_get(C, (i+1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (0)+(dc.Nfy-1)*dc.Nfx) - gsl_vector_get(B, (0)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (0)+(dc.Nfy-1)*dc.Nfx) - gsl_vector_get(C, (0)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      LijBC       = delxxB*delyyC + delyyB*delxxC + -1.0/2.0*( delxpypB*delxpypC + delxmymB*delxmymC + delxmypB*delxmypC + delxpymB*delxpymC);
+      H 	  = H + dc.hx*dc.hy*gsl_vector_get(A, (i)+(j)*dc.Nfx)*LijBC;
+
+    }
+  }
+  
+  for (j = dc.Nfy-1; j < dc.Nfy; j++){
+    for (i = 1; i < dc.Nfx-1; i++){
+      delxxB      = 1.0/dc.hx/dc.hx*( gsl_vector_get(B, (i+1)+(j)*dc.Nfx) + gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxxC      = 1.0/dc.hx/dc.hx*( gsl_vector_get(C, (i+1)+(j)*dc.Nfx) + gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      
+      delyyC      = 1.0/dc.hy/dc.hy*( gsl_vector_get(C, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j-1)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      delyyB      = 1.0/dc.hy/dc.hy*( gsl_vector_get(B, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j-1)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      
+      delxpypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i+1)+(dc.Nfy-1)*dc.Nfx) - gsl_vector_get(B, (i+1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i+1)+(dc.Nfy-1)*dc.Nfx) - gsl_vector_get(C, (i+1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i-1)+(j-1)*dc.Nfx) - gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i-1)+(j-1)*dc.Nfx) - gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxpymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i+1)+(j-1)*dc.Nfx) - gsl_vector_get(B, (i+1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i+1)+(j-1)*dc.Nfx) - gsl_vector_get(C, (i+1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i-1)+(dc.Nfy-1)*dc.Nfx) - gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i-1)+(dc.Nfy-1)*dc.Nfx) - gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      LijBC       = delxxB*delyyC + delyyB*delxxC + -1.0/2.0*( delxpypB*delxpypC + delxmymB*delxmymC + delxmypB*delxmypC + delxpymB*delxpymC);
+      H 	  = H + dc.hx*dc.hy*gsl_vector_get(A, (i)+(j)*dc.Nfx)*LijBC;
+
+    }
+  }
+  
+  for (j = dc.Nfy-1; j < dc.Nfy; j++){
+    for (i = dc.Nfx-1; i < dc.Nfx; i++){
+      delxxB      = 1.0/dc.hx/dc.hx*( gsl_vector_get(B, (dc.Nfx-1)+(j)*dc.Nfx) + gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxxC      = 1.0/dc.hx/dc.hx*( gsl_vector_get(C, (dc.Nfx-1)+(j)*dc.Nfx) + gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      
+      delyyC      = 1.0/dc.hy/dc.hy*( gsl_vector_get(C, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j-1)*dc.Nfx) - 2*gsl_vector_get(C, (i)+(j)*dc.Nfx) );  
+      delyyB      = 1.0/dc.hy/dc.hy*( gsl_vector_get(B, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j-1)*dc.Nfx) - 2*gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      
+      delxpypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (dc.Nfx-1)+(dc.Nfy-1)*dc.Nfx) - gsl_vector_get(B, (dc.Nfx-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (dc.Nfx-1)+(dc.Nfy-1)*dc.Nfx) - gsl_vector_get(C, (dc.Nfx-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i-1)+(j-1)*dc.Nfx) - gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i-1)+(j-1)*dc.Nfx) - gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxpymB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (dc.Nfx-1)+(j-1)*dc.Nfx) - gsl_vector_get(B, (dc.Nfx-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(j-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxpymC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (dc.Nfx-1)+(j-1)*dc.Nfx) - gsl_vector_get(C, (dc.Nfx-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(j-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      delxmypB    = 1.0/dc.hx/dc.hy*( gsl_vector_get(B, (i-1)+(dc.Nfy-1)*dc.Nfx) - gsl_vector_get(B, (i-1)+(j)*dc.Nfx) - gsl_vector_get(B, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(B, (i)+(j)*dc.Nfx) );  
+      delxmypC    = 1.0/dc.hx/dc.hy*( gsl_vector_get(C, (i-1)+(dc.Nfy-1)*dc.Nfx) - gsl_vector_get(C, (i-1)+(j)*dc.Nfx) - gsl_vector_get(C, (i)+(dc.Nfy-1)*dc.Nfx) + gsl_vector_get(C, (i)+(j)*dc.Nfx) );
+      
+      LijBC       = delxxB*delyyC + delyyB*delxxC + -1.0/2.0*( delxpypB*delxpypC + delxmymB*delxmymC + delxmypB*delxmypC + delxpymB*delxpymC);
+      H 	  = H + dc.hx*dc.hy*gsl_vector_get(A, (i)+(j)*dc.Nfx)*LijBC;
+
+    }
+  }
+
   return H;
 }
 // Matlab code

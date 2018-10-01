@@ -3,9 +3,12 @@
 #include "struct_def.h"
 
 /* Definitions for routines */
-void SysInit(sys_var*, run_param , mat_const , state_var , sys_const , disc_const , gsl_rng* );
-void SysRead(sys_var*, run_param , mat_const , state_var , sys_const , disc_const , gsl_rng* );
-void IntegrateSys(sys_var*, run_param , gsl_rng* , state_var);
+void SysInit(sys_var*, run_param , mat_const , state_var , sys_const , disc_const );
+void SysRead(sys_var*, run_param , mat_const , state_var , sys_const , disc_const );
+void StateInit(sys_var*, run_param , state_var , gsl_rng* );
+void StateRead(sys_var*, run_param );
+void IntegrateSys(sys_var*, run_param , gsl_rng* , state_var );
+void StateStore(sys_var* ,run_param );
 
 int 	main(int argc, char* argv[])
 {
@@ -18,9 +21,11 @@ int 	main(int argc, char* argv[])
 
   printf("# Langevin dynamics simulator for coupled modes started ...\n\n");
   
-  if (argc!=9) 
+  int gargc = 9;
+  if ((argc-1)!=gargc) 
   {
-   printf("ERROR: specify four arguments: 1. mmax  2. nmax  3. timestep (ns)  4. temp (K)  5. gam  6. tol  7. Init(0)/Read(1)  8. seed \n");
+   printf("ERROR: no. of arguments given %d, needed %d\n", (argc-1), gargc);
+   printf("ERROR: specify 9 arguments: 1. max 2. timestep (ns)  3. runtime (ns)  4. temp (K)  5. gam  6. tol  7. sys-init(0)/read(1)  8. state-init(0)/read(1)  9. seed\n");
    exit(1);
   }
 
@@ -31,8 +36,7 @@ int 	main(int argc, char* argv[])
   state_var sv;
   sys_const sc;
   disc_const dc;
-  int seed 	      = atoi(argv[8]); 
-
+  int seed 	      = atoi(argv[9]); 
   // system constants !!
 
 /*  int nmodes    = atoi(argv[1]);
@@ -40,13 +44,14 @@ int 	main(int argc, char* argv[])
   int run_id    = atoi(argv[3]);
 */  
 
-  sc.mmax             = atoi(argv[1]);
-  sc.nmax             = atoi(argv[2]);
-  sc.Lx               = 2E4;
-  sc.Ly               = 1E4;
+  sc.max             = atoi(argv[1]);
+  // sc.nmax             = atoi(argv[2]);
+  sc.Lx               = 0.04E4;
+  sc.Ly               = 0.04E4;
   sc.run_id           = 1;
 
   // Material constants !!
+  mc.kb               = 1.5;                        	      // eV
   mc.Et               = 340*Npm_eVpA2;                        // eV/A^2
   mc.DEt              = 40*Npm_eVpA2;                         // eV/A^2
   mc.rho              = 7.4E-7*kgpm2_amupA2*amuA2pns2_eV;     // eV/(A^4/ns^2)
@@ -55,17 +60,17 @@ int 	main(int argc, char* argv[])
 
   // State variables !!
   sv.T                = atof(argv[4]);                        // K
-  sv.e_pre            = 1E-4;
+  sv.e_pre            = 1E-3;
 
   // Run Parameters !!
-  r.dt                = atof(argv[3]);                        // ns
-  r.runtime           = 1E6;                                  // ns
+  r.dt                = atof(argv[2]);                        // ns
+  r.runtime           = atof(argv[3]);                                  // ns
   r.nfreq             = 20;
-  r.nmodes            = sc.mmax*sc.nmax;   
+  r.nmodes            = sc.max*sc.max;   
 
   // Discretization Constants !!
   dc.Nfx              = 51;                                  // set by mathematica wrapper
-  dc.Nfy              = 26;                                  // set by mathematica wrapper
+  dc.Nfy              = 51;                                  // set by mathematica wrapper
   dc.Lx 	      = sc.Lx/(1E4);			     // um - using different unit of length for discretization
   dc.Ly 	      = sc.Ly/(1E4);			     // um - using different unit of length for discretization
   dc.hx 	      = dc.Lx/(dc.Nfx-1.0);		     // um - using different unit of length for discretization
@@ -90,11 +95,15 @@ int 	main(int argc, char* argv[])
   s.enonvec           = gsl_vector_alloc(r.nmodes);
   s.sigvec            = gsl_vector_alloc(r.nmodes);
   s.tol 	      = atof(argv[6]);			   // detuning parameter for IRs
+  s.systyp 	      = atoi(argv[7]);
+  s.statetyp 	      = atoi(argv[8]);
 
-  const char *mode[2];
-  mode[0] = "Init";
-  mode[1] = "Read";
-  printf("# No. of modes: %d\n# dumpstep: 	  %lf\n# temp: 	  %lf\n# gam: 	  %lf\n# tol: 	  %lf\n# mode: 	  %s\n# seed: 	  %d\n",r.nmodes, r.dt*r.nfreq, sv.T, mc.gam, s.tol, mode[atoi(argv[7])], seed);
+  const char *sysmode[3], *statemode[3];
+  sysmode[0] = "Init";
+  sysmode[1] = "Read";
+  statemode[0] = "Init";
+  statemode[1] = "Read";
+  printf("#    o No. of modes:\t%d\n#    o timestep:\t%2.2e ns\n#    o dumpstep:\t%2.2e ns\n#    o runtime:\t\t%2.2e ns\n#    o temp:\t\t%2.2e K\n#    o gam:\t\t%2.2e 1/ns\n#    o tol:\t\t%2.2e\n#    o sysmode:\t\t%s\n#    o statemode:\t%s\n#    o seed:\t\t%d\n", r.nmodes, r.dt, r.dt*r.nfreq, r.runtime, sv.T, mc.gam, s.tol, sysmode[s.systyp], statemode[s.statetyp], seed);
 
   // Random number initialization
   const gsl_rng_type * gT;
@@ -104,23 +113,30 @@ int 	main(int argc, char* argv[])
   gr    = gsl_rng_alloc(gT);
 
   // System Initialization
-  if (atoi(argv[7])==0)
-    SysInit(&s, r, mc, sv, sc, dc, gr);
-  else 
-    SysRead(&s, r, mc, sv, sc, dc, gr);
+  if (s.systyp==0)
+    SysInit(&s, r, mc, sv, sc, dc);
+  else
+    SysRead(&s, r, mc, sv, sc, dc);
+
+  if (s.statetyp==0)
+    StateInit(&s, r, sv, gr);
+  else
+    StateRead(&s, r);
 
   // Integrate
   int     i;
-  r.nsteps            = (int) r.runtime/r.dt;
+  r.nsteps            = (int) (r.runtime/r.dt + s.step);
 
-  printf("\n# 3. Integration started ...\n");
-  for (i=1; i<=r.nsteps; i++)
+  printf("\n# 4. Integration started ...\n");
+  for (i=s.istep; i<r.nsteps; i++)
   {
-    r.step = i;
+    //r.step = i;
 
+    s.step+=1;
     IntegrateSys(&s, r, gr, sv);
 
   }
+  StateStore(&s, r);
   gsl_rng_free(gr);
 }
 
