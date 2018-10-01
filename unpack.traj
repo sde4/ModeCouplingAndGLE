@@ -1,0 +1,15 @@
+#!/bin/bash
+  
+nmodes=36
+nchunk=$((nmodes+1))
+for i in {1..9..1}
+  do
+  num2str=`printf "%04d" $i`
+  mode=$((i+1))
+  #perl -ne 'print if $. % $nchunk == $mode'  < modetraj.0.txt > mode${num2str}.txt
+  f=${mode}~${nchunk}p
+  sed -n $f modetraj.1.txt > mode${num2str}.txt
+  echo "$i"
+  done
+
+exit 0

@@ -1,0 +1,30 @@
+#!/bin/bash
+  
+# clean up files before run
+rm -rf out.* *.txt *restart
+printf "#Cleaned:       rm -rf out.* *.txt *restart\n"
+
+# submit jobs
+ndig=-7
+
+# change seed
+getcwd=`pwd`
+seedno=${getcwd##*seed}
+
+# submit jobs
+printf "#Submitted jobs:\n"
+sed -i 's/seed=.*/seed'=${seedno}'/g' batmgeq.qsub
+printf "#seed in batmgeq.qsub changed to:  %s\n" ${seedno}
+sed -i 's/seed=.*/seed'=${seedno}'/g' batmgnve.qsub
+printf "#seed in batmgnve.qsub changed to:  %s\n" ${seedno}
+
+FIRST1=`sbatch batmgeq.qsub`
+FIRST1id=${FIRST1: $ndig}
+echo $FIRST1
+
+FIRST1=`sbatch --dependency=afterok:$FIRST1id batmgnve.qsub`
+FIRST1id=${FIRST1: $ndig}
+echo $FIRST1
+
+
+exit 0

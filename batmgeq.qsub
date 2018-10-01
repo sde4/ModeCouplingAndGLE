@@ -1,0 +1,28 @@
+#!/bin/bash
+## Sample batch script for openmp C executable submission
+
+#SBATCH         -J      mcgle               	# Job Name
+#SBATCH         -o      out.mcgle.%j           	# Output and error file name
+#SBATCH         -p      flat-quadrant           # Queue name
+#SBATCH         -N      1                     	# Total num of Nodes requested 68 cores per Node
+#SBATCH         -n      68                    	# Total num of mpi tasks requested
+#SBATCH         -t      48:00:00      	      	# Run time (hh:mm:ss)
+#SBATCH         --mail-user=sde4@illinois.edu
+#SBATCH         --mail-type=fail            	# Send email at begin and end of job
+#SBATCH         -A      TG-CDA100010         	# projectnumber
+
+#cd ${PBS_O_WORKDIR}
+
+# Specify 9 arguments: 1. max 2. timestep (ns)  3. runtime (ns)  4. temp (K)  5. gam  6. tol  7. sys-init(0)/read(1)  8. state-init(0)/read(1)  9. seed=1000
+export OMP_NUM_THREADS=136
+seed=1000
+GSL_RNG_SEED=${seed} 	./mcgle.omp \
+			8 \
+			5E-5 \
+			10 \
+			300 \
+			0.1 \
+			1E-3 \
+			1 \
+			0 \
+			${seed}
