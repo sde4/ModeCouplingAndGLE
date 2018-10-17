@@ -11,11 +11,12 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   printf("\n# 2. System Initialization ...\n");
 
   int i, j, k, l, cou1, cou2, cou3, cou4, cou5;
+  int mord, nord, pord, qord;
   int idat;
   int sind;
   double fdat;
   double N, Nj, lamh, fr, fri;
-  double gam;
+  double gam, Ath, DissViscElas, DissOscillator;
   double m;
   double sig;
   for_var f;
@@ -59,23 +60,70 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
  
   // Count no. of modes in each symmetry group !! 
   cou1 = 0; cou2 = 0; cou3 = 0; cou4 = 0; cou5 = 0;
-  for (j = 0; j < sc.max; j++) {
-    for (i = 0; i < sc.max; i++) {
-      // Mode grouping based on symmetry!!
-      // 4 groups: SS, SA, AS, AA
-      if (((i + 1) % 2 == 1) && ((j + 1) % 2 == 1)) {
-        cou2++;
+  for (k=1; k<=3; k++) {
+    for (j=1; j<=k; j++) {
+      for (i=1; i<=j; i++) {    // neglecting symmetric pairs i.e. only one of (m,n) and (n,m) will be chosen assuming the membrane is square 
+        if (j==k || i==k) {
+          mord = i;
+          nord = j;
+          gsl_matrix_set(s->modindmat, cou1, 0, mord);
+          gsl_matrix_set(s->modindmat, cou1, 1, nord);
+          gsl_vector_set(s->modindvec, cou1, cou1 + 1);
+
+          // Mode grouping based on symmetry!!
+          // 4 groups: SS, SA, AS, AA
+          if ((mord%2 == 1) && (nord%2 == 1)) {
+            gsl_vector_set(s->SSmodindvec, cou2, cou1 + 1);
+            cou2++;
+          }
+          if ((mord%2 == 1) && (nord%2 == 0)) {
+            gsl_vector_set(s->SAmodindvec, cou3, cou1 + 1);
+            cou3++;
+          }
+          if ((mord%2 == 0) && (nord%2 == 1)) {
+            gsl_vector_set(s->ASmodindvec, cou4, cou1 + 1);
+            cou4++;
+          }
+          if ((mord%2 == 0) && (nord%2 == 0)) {
+            gsl_vector_set(s->AAmodindvec, cou5, cou1 + 1);
+            cou5++;
+          }
+          cou1++;
+        }
       }
-      if (((i + 1) % 2 == 1) && ((j + 1) % 2 == 0)) {
-        cou3++;
+    }
+  }
+  for (k=1; k<=sc.max; k++) {
+    for (j=1; j<=k; j++) {
+      for (i=1; i<=j; i++) {    // neglecting symmetric pairs i.e. only one of (m,n) and (n,m) will be chosen assuming the membrane is square 
+        if (j==k || i==k) {
+          mord = 25*i;
+          nord = 25*j;
+          gsl_matrix_set(s->modindmat, cou1, 0, mord);
+          gsl_matrix_set(s->modindmat, cou1, 1, nord);
+          gsl_vector_set(s->modindvec, cou1, cou1 + 1);
+
+          // Mode grouping based on symmetry!!
+          // 4 groups: SS, SA, AS, AA
+          if ((mord%2 == 1) && (nord%2 == 1)) {
+            gsl_vector_set(s->SSmodindvec, cou2, cou1 + 1);
+            cou2++;
+          }
+          if ((mord%2 == 1) && (nord%2 == 0)) {
+            gsl_vector_set(s->SAmodindvec, cou3, cou1 + 1);
+            cou3++;
+          }
+          if ((mord%2 == 0) && (nord%2 == 1)) {
+            gsl_vector_set(s->ASmodindvec, cou4, cou1 + 1);
+            cou4++;
+          }
+          if ((mord%2 == 0) && (nord%2 == 0)) {
+            gsl_vector_set(s->AAmodindvec, cou5, cou1 + 1);
+            cou5++;
+          }
+          cou1++;
+        }
       }
-      if (((i + 1) % 2 == 0) && ((j + 1) % 2 == 1)) {
-        cou4++;
-      }
-      if (((i + 1) % 2 == 0) && ((j + 1) % 2 == 0)) {
-        cou5++;
-      }
-      cou1++;
     }
   }
   s->SScou = cou2;
@@ -172,24 +220,67 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     fri = gsl_vector_get(s->frvec, i);
     m = gsl_vector_get(s->mvec, i);
 
-    gam = mc.gam;
+    /**************************/
+    // friction calculation !!
+    /**************************/
+    mord = gsl_matrix_get(s->modindmat, i, 0);
+    nord = gsl_matrix_get(s->modindmat, i, 1);
+    Ath = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5);
+    gsl_vector_set(s->Athvec, i, Ath);
+
+    DissViscElas = mc.DEt*pow(PI,5.0)*pow(Ath, 4.0)*( 9*pow(sc.Ly,4.0)*pow(mord,4.0) + 2*pow(sc.Lx,2.0)*pow(sc.Ly,2.0)*pow(mord,2.0)*pow(nord,2.0) + 9*pow(sc.Lx,4.0)*pow(nord,4.0) )/(256*pow(sc.Lx*sc.Ly,3.0)) * ((2*PI*fri*mc.tausig)/(1 + (2*PI*fri*mc.tausig)*(2*PI*fri*mc.tausig)) );
+    DissOscillator = 1/2.0*PI*m*(2*PI*fri)*pow(Ath, 2.0);
+
+    if (mc.gam > 0.0 ){
+      gam = mc.gam + DissViscElas/DissOscillator;   	// intrinsic + user specified
+    }
+    else if (mc.gam == -1.0){
+      gam = DissViscElas/DissOscillator;   		// intrinsic
+    }
+    else if (mc.gam == 0.0){
+      gam = 0.0;   					// zero
+    }
+
     gsl_vector_set(s->gamvec, i, gam);
 
+    /**************************/
+    // noise calculation !!
+    /**************************/
     sig = pow(2 * kB * sv.T * gam / m, 0.5);
     gsl_vector_set(s->sigvec, i, sig);
   }
-  // Initial perturbation of 20 KBT to mode 1
-  // fri = gsl_vector_get(s->frvec, 0);
-  // m = gsl_vector_get(s->mvec, 0);
-  // gsl_vector_set(s->gamvec, 0, 0.0);
-  // gsl_vector_set(s->sigvec, 0, 0.0);
-  // gsl_vector_set(s->qvec, 0, pow(10 * kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5));
-  // gsl_vector_set(s->qdotvec, 0, pow(10 * kB * sv.T / m, 0.5));
+  // Setting gam 0 for initially perturbed mode
+  if (r.pertEval != 0.0 && mc.gam==-1.0 ){
+    m 	 = gsl_vector_get(s->mvec, r.pertmodind-1);
+    fri  = gsl_vector_get(s->frvec, r.pertmodind-1);
+    Ath  = pow(2*r.pertEval/(m * pow(2 * PI * fri, 2.0)), 0.5);
+    gsl_vector_set(s->Athvec, r.pertmodind-1, Ath);
 
+    mord = gsl_matrix_get(s->modindmat, r.pertmodind-1, 0);
+    nord = gsl_matrix_get(s->modindmat, r.pertmodind-1, 1);
+
+    DissViscElas = mc.DEt*pow(PI,5.0)*pow(Ath, 4.0)*( 9*pow(sc.Ly,4.0)*pow(mord,4.0) + 2*pow(sc.Lx,2.0)*pow(sc.Ly,2.0)*pow(mord,2.0)*pow(nord,2.0) + 9*pow(sc.Lx,4.0)*pow(nord,4.0) )/(256*pow(sc.Lx*sc.Ly,3.0)) * ((2*PI*fri*mc.tausig)/(1 + (2*PI*fri*mc.tausig)*(2*PI*fri*mc.tausig)) );
+    DissOscillator = 1/2.0*PI*m*(2*PI*fri)*pow(Ath, 2.0);
+    
+    // gam = DissViscElas/DissOscillator;   		// intrinsic
+    // sig = pow(2 * kB * sv.T * gam / m, 0.5);
+    gam = 0.0;
+    sig = 0.0;
+    gsl_vector_set(s->gamvec, r.pertmodind-1, gam);
+    gsl_vector_set(s->sigvec, r.pertmodind-1, sig);
+  }
 
   /**************************/
   // Writing files !!
   /**************************/
+
+  // Thermal amplitude file !!
+  outfp = fopen("Athvec.txt", "w");
+  for (i = 0; i < r.nmodes - 1; i++) {
+    fprintf(outfp, "%5.5e\n", gsl_vector_get(s->Athvec, i));
+  }
+  fprintf(outfp, "%5.5e", gsl_vector_get(s->Athvec, i));
+  fclose(outfp);
   
   // friction file !!
   outfp = fopen("gamvec.txt", "w");

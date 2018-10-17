@@ -20,36 +20,71 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   int sind, pind, qind, rind;
   double N, Nj, lamx, lamy, lamh, R, fr;
   double fri, frj, frk, frl;
-  double gam;
+  double gam, Ath, DissViscElas, DissOscillator;
   double m;
   double sig;
   FILE *outfp;
   char outfname[40];
 
   cou1 = 0; cou2 = 0; cou3 = 0; cou4 = 0; cou5 = 0;
-  for (k=1; k<=sc.max; k++) {
+  for (k=1; k<=3; k++) {
     for (j=1; j<=k; j++) {
-      for (i=1; i<=k; i++) {
+      for (i=1; i<=j; i++) {    // neglecting symmetric pairs i.e. only one of (m,n) and (n,m) will be chosen assuming the membrane is square 
         if (j==k || i==k) {
-          gsl_matrix_set(s->modindmat, cou1, 0, i);
-          gsl_matrix_set(s->modindmat, cou1, 1, j);
+          mord = i;
+          nord = j;
+          gsl_matrix_set(s->modindmat, cou1, 0, mord);
+          gsl_matrix_set(s->modindmat, cou1, 1, nord);
           gsl_vector_set(s->modindvec, cou1, cou1 + 1);
 
           // Mode grouping based on symmetry!!
           // 4 groups: SS, SA, AS, AA
-          if ((i%2 == 1) && (j%2 == 1)) {
+          if ((mord%2 == 1) && (nord%2 == 1)) {
             gsl_vector_set(s->SSmodindvec, cou2, cou1 + 1);
             cou2++;
           }
-          if ((i%2 == 1) && (j%2 == 0)) {
+          if ((mord%2 == 1) && (nord%2 == 0)) {
             gsl_vector_set(s->SAmodindvec, cou3, cou1 + 1);
             cou3++;
           }
-          if ((i%2 == 0) && (j%2 == 1)) {
+          if ((mord%2 == 0) && (nord%2 == 1)) {
             gsl_vector_set(s->ASmodindvec, cou4, cou1 + 1);
             cou4++;
           }
-          if ((i%2 == 0) && (j%2 == 0)) {
+          if ((mord%2 == 0) && (nord%2 == 0)) {
+            gsl_vector_set(s->AAmodindvec, cou5, cou1 + 1);
+            cou5++;
+          }
+          cou1++;
+        }
+      }
+    }
+  }
+  for (k=1; k<=sc.max; k++) {
+    for (j=1; j<=k; j++) {
+      for (i=1; i<=j; i++) {    // neglecting symmetric pairs i.e. only one of (m,n) and (n,m) will be chosen assuming the membrane is square 
+        if (j==k || i==k) {
+          mord = 25*i;
+          nord = 25*j;
+          gsl_matrix_set(s->modindmat, cou1, 0, mord);
+          gsl_matrix_set(s->modindmat, cou1, 1, nord);
+          gsl_vector_set(s->modindvec, cou1, cou1 + 1);
+
+          // Mode grouping based on symmetry!!
+          // 4 groups: SS, SA, AS, AA
+          if ((mord%2 == 1) && (nord%2 == 1)) {
+            gsl_vector_set(s->SSmodindvec, cou2, cou1 + 1);
+            cou2++;
+          }
+          if ((mord%2 == 1) && (nord%2 == 0)) {
+            gsl_vector_set(s->SAmodindvec, cou3, cou1 + 1);
+            cou3++;
+          }
+          if ((mord%2 == 0) && (nord%2 == 1)) {
+            gsl_vector_set(s->ASmodindvec, cou4, cou1 + 1);
+            cou4++;
+          }
+          if ((mord%2 == 0) && (nord%2 == 0)) {
             gsl_vector_set(s->AAmodindvec, cou5, cou1 + 1);
             cou5++;
           }
@@ -132,9 +167,9 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   // frequency file !!
   outfp = fopen("frvec.dat", "w");
   for (i = 0; i < r.nmodes - 1; i++) {
-    fprintf(outfp, "%f\n", gsl_vector_get(s->frvec, i));
+    fprintf(outfp, "%10.10f\n", gsl_vector_get(s->frvec, i));
   }
-  fprintf(outfp, "%f", gsl_vector_get(s->frvec, i));
+  fprintf(outfp, "%10.10f", gsl_vector_get(s->frvec, i));
   fclose(outfp);
 
   /**************************/
@@ -165,13 +200,30 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     /**************************/
     // mass calculation !!
     /**************************/
-    m = mc.rho * sc.Lx * sc.Ly;
+    m = mc.rho * sc.Lx * sc.Ly/4;   // meff=m/4 https://arxiv.org/pdf/1305.0557.pdf
     gsl_vector_set(s->mvec, i, m);
 
     /**************************/
     // friction calculation !!
     /**************************/
-    gam = mc.gam; //1E3*pow(PI, 4.0)*kB*sv.T*mc.DEt*( 9.0*pow(mord, 4.0) + 9.0*pow(nord, 4.0) + 2.0*pow(mord, 2.0)*pow(nord, 2.0))/(128.0*pow(sc.L, 2.0)*pow(m, 2.0)*pow(2*PI*fri, 3.0));
+    mord = gsl_matrix_get(s->modindmat, i, 0);
+    nord = gsl_matrix_get(s->modindmat, i, 1);
+    Ath = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5);
+    gsl_vector_set(s->Athvec, i, Ath);
+
+    DissViscElas = mc.DEt*pow(PI,5.0)*pow(Ath, 4.0)*( 9*pow(sc.Ly,4.0)*pow(mord,4.0) + 2*pow(sc.Lx,2.0)*pow(sc.Ly,2.0)*pow(mord,2.0)*pow(nord,2.0) + 9*pow(sc.Lx,4.0)*pow(nord,4.0) )/(256*pow(sc.Lx*sc.Ly,3.0)) * ((2*PI*fri*mc.tausig)/(1 + (2*PI*fri*mc.tausig)*(2*PI*fri*mc.tausig)) );
+    DissOscillator = 1/2.0*PI*m*(2*PI*fri)*pow(Ath, 2.0);
+
+    if (mc.gam > 0.0 ){
+      gam = mc.gam + DissViscElas/DissOscillator;   	// intrinsic + user specified
+    }
+    else if (mc.gam == -1.0){
+      gam = DissViscElas/DissOscillator;   		// intrinsic
+    }
+    else if (mc.gam == 0.0){
+      gam = 0.0;   					// zero
+    }
+
     gsl_vector_set(s->gamvec, i, gam);
 
     /**************************/
@@ -180,19 +232,23 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     sig = pow(2 * kB * sv.T * gam / m, 0.5);
     gsl_vector_set(s->sigvec, i, sig);
   }
-  // Initial perturbation of 20 KBT to mode 1
-  // gsl_vector_set(s->gamvec, 0, 0.0);
-  // gsl_vector_set(s->sigvec, 0, 0.0);
   
   // File write !!
   // mass file !!
   outfp = fopen("mvec.dat", "w");
   for (i = 0; i < r.nmodes - 1; i++) {
-    fprintf(outfp, "%f\n", gsl_vector_get(s->mvec, i));
+    fprintf(outfp, "%10.10f\n", gsl_vector_get(s->mvec, i));
   }
-  fprintf(outfp, "%f", gsl_vector_get(s->mvec, i));
+  fprintf(outfp, "%10.10f", gsl_vector_get(s->mvec, i));
   fclose(outfp);
 
+  // Thermal amplitude file !!
+  outfp = fopen("Athvec.txt", "w");
+  for (i = 0; i < r.nmodes - 1; i++) {
+    fprintf(outfp, "%5.5e\n", gsl_vector_get(s->Athvec, i));
+  }
+  fprintf(outfp, "%5.5e", gsl_vector_get(s->Athvec, i));
+  fclose(outfp);
 
   // friction file !!
   outfp = fopen("gamvec.txt", "w");

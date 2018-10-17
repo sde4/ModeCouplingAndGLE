@@ -107,19 +107,25 @@ void ThirdOrderCouplingCalculation(sys_var* s, mat_const mc, disc_const dc) {
     }
   }
 
-  NF = 625; // Note: NF is not set to Nfx*Nfy
+  NF = 225; // Note: NF is not set to Nfx*Nfy
   #pragma omp parallel for private(i,sind,pind,qind,rind,idat,fdat,mords,nords,phi_s,norm2D,mordp,nordp,phi_p,mordq,nordq,phi_q,mordr,nordr,phi_r,gams_pqr,n,psi_n,xeta_n4,Hn_pq,Hn_rs,j)
   for (i=0; i<s->IRcou; i++){
     // printf("Thread %d is doing iteration %d.\n", omp_get_thread_num( ), i);
     
-    phi_s 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
-    phi_p 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
-    phi_q 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
-    phi_r 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
-    psi_n 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
+    // phi_s 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
+    // phi_p 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
+    // phi_q 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
+    // phi_r 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
+    // psi_n 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
     fdat =       gsl_matrix_get(alphamat, i, 0);
     // looping over unique ids
     if (fdat==0.0){ 
+      phi_s 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
+      phi_p 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
+      phi_q 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
+      phi_r 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
+      psi_n 	  = gsl_vector_alloc(dc.Nfx*dc.Nfy);
+
       sind = (int) gsl_matrix_get(IRs_pqrcombmat, i, 0);
       pind = (int) gsl_matrix_get(IRs_pqrcombmat, i, 1);
       qind = (int) gsl_matrix_get(IRs_pqrcombmat, i, 2);
@@ -158,15 +164,16 @@ void ThirdOrderCouplingCalculation(sys_var* s, mat_const mc, disc_const dc) {
         xeta_n4 = gsl_vector_get(Feval, n);
          
         Hn_pq   = GalerkinProj(psi_n, phi_p, phi_q, dc);
-        Hn_rs   = GalerkinProj(psi_n, phi_r, phi_s, dc);
+        Hn_rs   = GalerkinProj(psi_n, phi_r, phi_s, dc); 	
+        //Hn_rs   = GalerkinProj(phi_s, phi_r, psi_n, dc);      // checked
         
         gams_pqr += Hn_pq*Hn_rs/(2.0*xeta_n4); 			// the unit of gamma here is um^-4 and needs to be converted to A^-4
       }
-      gsl_matrix_set(alphamat, i, 0, gams_pqr*mc.Et/mc.rho*dc.gamunitconv);
+      gsl_matrix_set(alphamat, i, 0, (dc.Lx*dc.Ly)/4*gams_pqr*mc.Et/mc.rho*dc.gamunitconv); // Sw = ||phi|| = sqrt(LxLy/4)
       gsl_matrix_set(alphamat, i, 1, gams_pqr*pow(dc.Lx*dc.Ly, 3.0));
       printf("#          %03d(%02dx%02d)\t%03d(%02dx%02d)\t%03d(%02dx%02d)\t%03d(%02dx%02d)\t%f\t%5.5e\tthread:%02d\titer:%d\n", 
 		  sind, mords, nords, pind, mordp, nordp, qind, mordq, nordq, rind, mordr, nordr,
-		  gams_pqr*pow(dc.Lx*dc.Ly, 3.0), gams_pqr*mc.Et/mc.rho*dc.gamunitconv, omp_get_thread_num( ), i);
+		  gams_pqr*pow(dc.Lx*dc.Ly, 3.0), (dc.Lx*dc.Ly)/4*gams_pqr*mc.Et/mc.rho*dc.gamunitconv, omp_get_thread_num( ), i); // Sw = ||phi|| = sqrt(LxLy/4)
 
       // searching for same ids
       for (j = i+1; j < s->IRcou; j++){
@@ -175,19 +182,32 @@ void ThirdOrderCouplingCalculation(sys_var* s, mat_const mc, disc_const dc) {
           pind = (int) gsl_matrix_get(IRs_pqrcombmat, j, 1);
           qind = (int) gsl_matrix_get(IRs_pqrcombmat, j, 2);
           rind = (int) gsl_matrix_get(IRs_pqrcombmat, j, 3);
-          gsl_matrix_set(alphamat, j, 0, gams_pqr*mc.Et/mc.rho*dc.gamunitconv);
+      	  mords = gsl_matrix_get(s->modindmat, sind-1, 0); 
+      	  nords = gsl_matrix_get(s->modindmat, sind-1, 1);
+      	  mordp = gsl_matrix_get(s->modindmat, pind-1, 0); 
+      	  nordp = gsl_matrix_get(s->modindmat, pind-1, 1);
+      	  mordq = gsl_matrix_get(s->modindmat, qind-1, 0); 
+      	  nordq = gsl_matrix_get(s->modindmat, qind-1, 1);
+      	  mordr = gsl_matrix_get(s->modindmat, rind-1, 0); 
+      	  nordr = gsl_matrix_get(s->modindmat, rind-1, 1);
+          gsl_matrix_set(alphamat, j, 0, (dc.Lx*dc.Ly)/4*gams_pqr*mc.Et/mc.rho*dc.gamunitconv); // Sw = ||phi|| = sqrt(LxLy/4)
 	  gsl_matrix_set(alphamat, j, 1, gams_pqr*pow(dc.Lx*dc.Ly, 3.0));
 	  printf("#          %03d(%02dx%02d)\t%03d(%02dx%02d)\t%03d(%02dx%02d)\t%03d(%02dx%02d)\t%f\t%5.5e\tthread:%02d\titer:%d\n",
 	              sind, mords, nords, pind, mordp, nordp, qind, mordq, nordq, rind, mordr, nordr,
-	              gams_pqr*pow(dc.Lx*dc.Ly, 3.0), gams_pqr*mc.Et/mc.rho*dc.gamunitconv, omp_get_thread_num( ), i);
+	              gams_pqr*pow(dc.Lx*dc.Ly, 3.0), (dc.Lx*dc.Ly)/4*gams_pqr*mc.Et/mc.rho*dc.gamunitconv, omp_get_thread_num( ), i); // Sw = ||phi|| = sqrt(LxLy/4)
 	}
       }
+      free(phi_s);
+      free(phi_p);
+      free(phi_q);
+      free(phi_r);
+      free(psi_n);
     }
-    free(phi_s);
-    free(phi_p);
-    free(phi_q);
-    free(phi_r);
-    free(psi_n);
+    // free(phi_s);
+    // free(phi_p);
+    // free(phi_q);
+    // free(phi_r);
+    // free(psi_n);
   }
   
   cou1=0; // counts the total number of IR combinations

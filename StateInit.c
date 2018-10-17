@@ -42,16 +42,19 @@ void StateInit(sys_var* s, run_param r, state_var sv, gsl_rng* gr) {
     // q_t = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5); 		// 1/2 total energy is stored as PE
     gsl_vector_set(s->qvec, i, q_t);
 
-    // sigma = pow(kB * sv.T / m, 0.5);
-    // qdot_t      = gsl_ran_gaussian(gr, sigma);
+    sigma = pow(kB * sv.T / m, 0.5);
+    qdot_t      = gsl_ran_gaussian(gr, sigma);
     // qdot_t = 0.0;
-    qdot_t = pow(2*kB * sv.T / m, 0.5); 					// 1/2 total energy is stored as KE
+    // qdot_t = pow(2*kB * sv.T / m, 0.5); 					// 1/2 total energy is stored as KE
     gsl_vector_set(s->qdotvec, i, qdot_t);
 
   }
-  // Initial perturbation of 20 KBT to mode 1
-  // gsl_vector_set(s->qvec, 0, pow(10 * kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5));
-  // gsl_vector_set(s->qdotvec, 0, pow(10 * kB * sv.T / m, 0.5));
+  // Initial perturbation energy to one of the modes
+  m 	 = gsl_vector_get(s->mvec, r.pertmodind-1);
+  // qdot_t = gsl_vector_get(s->qdotvec, r.pertmodind-1);
+  // qdot_t += pow(2*r.pertEval/m, 0.5);
+  qdot_t = pow(2*r.pertEval/m, 0.5);
+  gsl_vector_set(s->qdotvec, r.pertmodind-1, qdot_t); 
 
 
   /**************************/

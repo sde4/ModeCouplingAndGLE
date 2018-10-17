@@ -1,6 +1,7 @@
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include "struct_def.h"
+#include <time.h>
 
 /* Definitions for routines */
 void SysInit(sys_var*, run_param , mat_const , state_var , sys_const , disc_const );
@@ -12,6 +13,9 @@ void StateStore(sys_var* ,run_param );
 
 int 	main(int argc, char* argv[])
 {
+  struct timespec begin, end;
+  clock_gettime(CLOCK_MONOTONIC_RAW, &begin);
+
   printf("\n \n");
   printf("##################################################################### \n");
   printf("#                @Subhadeep De  <sde4@illinois.edu>                 # \n"); 
@@ -21,11 +25,11 @@ int 	main(int argc, char* argv[])
 
   printf("# Langevin dynamics simulator for coupled modes started ...\n\n");
   
-  int gargc = 9;
+  int gargc = 11;
   if ((argc-1)!=gargc) 
   {
    printf("ERROR: no. of arguments given %d, needed %d\n", (argc-1), gargc);
-   printf("ERROR: specify 9 arguments: 1. max 2. timestep (ns)  3. runtime (ns)  4. temp (K)  5. gam  6. tol  7. sys-init(0)/read(1)  8. state-init(0)/read(1)  9. seed\n");
+   printf("ERROR: specify 9 arguments: 1. max 2. timestep (ns)  3. runtime (ns)  4. temp (K)  5. gam  6. tol  7. sys-init(0)/read(1)  8. state-init(0)/read(1)  9. pertmodeind  10. pertEscal  11. seed\n");
    exit(1);
   }
 
@@ -36,7 +40,7 @@ int 	main(int argc, char* argv[])
   state_var sv;
   sys_const sc;
   disc_const dc;
-  int seed 	      = atoi(argv[9]); 
+  int seed 	      = atoi(argv[11]); 
   // system constants !!
 
 /*  int nmodes    = atoi(argv[1]);
@@ -46,36 +50,47 @@ int 	main(int argc, char* argv[])
 
   sc.max             = atoi(argv[1]);
   // sc.nmax             = atoi(argv[2]);
-  sc.Lx               = 0.04E4;
-  sc.Ly               = 0.04E4;
+  // sc.Lx               = 0.04E4; // A
+  // sc.Ly               = 0.04E4; // A
+  sc.Lx               = 1.00; // um
+  sc.Ly               = 1.00; // um
   sc.run_id           = 1;
 
+  // State variables !!
+  sv.T                = atof(argv[4]);                       				// K
+  sv.e_pre            = 1E-4;
+
   // Material constants !!
-  mc.kb               = 1.5;                        	      // eV
-  mc.Et               = 340*Npm_eVpA2;                        // eV/A^2
-  mc.DEt              = 40*Npm_eVpA2;                         // eV/A^2
-  mc.rho              = 7.4E-7*kgpm2_amupA2*amuA2pns2_eV;     // eV/(A^4/ns^2)
-  mc.gam 	      = atof(argv[5]);			                  // 1/ns
+  mc.kb               = 1.5;                        	      				 // eV
+  // mc.Et               = 340*Npm_eVpA2;                       			 // eV/A^2
+  // mc.DEt              = 40*Npm_eVpA2;                        			 // eV/A^2
+  // mc.rho              = 7.4E-7*kgpm2_amupA2*amuA2pns2_eV;     			// eV/(A^4/ns^2)
+  mc.Et               = 331.0*Npm_eVpum2;                        				// eV/um^2
+  mc.DEt              = sv.T/300.0*(0.02202/(0.0004643 + sv.e_pre))*Npm_eVpum2;		// eV/um^2
+  mc.tausig           = 500./1.0E3;                         				// ns
+  mc.rho              = 7.4E-7*kgpm2_amupum2*amuum2pns2_eV;    				// eV/(um^4/ns^2)
+  mc.gam 	      = atof(argv[5]);			                  		// 1/ns
   // mc.alpha            = atof(argv[4]);
 
-  // State variables !!
-  sv.T                = atof(argv[4]);                        // K
-  sv.e_pre            = 1E-3;
-
   // Run Parameters !!
-  r.dt                = atof(argv[2]);                        // ns
-  r.runtime           = atof(argv[3]);                                  // ns
+  r.dt                = atof(argv[2]);                        				// ns
+  r.runtime           = atof(argv[3]);                                  		// ns
   r.nfreq             = 20;
-  r.nmodes            = sc.max*sc.max;   
+  r.nmodes            = sc.max*(sc.max+1)/2 + 6;						// Change if needed !!!!!!!!!!!!!!!!!!!   
+  r.pertmodind        = (int) atoi(argv[9]);   
+  r.pertEval          = kB*sv.T*atof(argv[10]);  	      				// eV 
 
   // Discretization Constants !!
-  dc.Nfx              = 51;                                  // set by mathematica wrapper
-  dc.Nfy              = 51;                                  // set by mathematica wrapper
-  dc.Lx 	      = sc.Lx/(1E4);			     // um - using different unit of length for discretization
-  dc.Ly 	      = sc.Ly/(1E4);			     // um - using different unit of length for discretization
-  dc.hx 	      = dc.Lx/(dc.Nfx-1.0);		     // um - using different unit of length for discretization
-  dc.hy 	      = dc.Ly/(dc.Nfy-1.0); 	 	     // um - using different unit of length for discretization
-  dc.gamunitconv      = 1.0/pow(1E4, 4.0);		     // Unit of gam is L^-4 - um^-4: convert to A^-4
+  dc.Nfx              = 51;                                  				// set by mathematica wrapper
+  dc.Nfy              = 51;                                  				// set by mathematica wrapper
+  // dc.Lx 	      = sc.Lx/(1E4);			     				// um - using different unit of length for discretization
+  // dc.Ly 	      = sc.Ly/(1E4);			     				// um - using different unit of length for discretization
+  dc.Lx 	      = sc.Lx;			     					// um - using same unit of length for discretization
+  dc.Ly 	      = sc.Ly;			     					// um - using same unit of length for discretization
+  dc.hx 	      = dc.Lx/(dc.Nfx-1.0);		     				// um - using different unit of length for discretization
+  dc.hy 	      = dc.Ly/(dc.Nfy-1.0); 	 	     				// um - using different unit of length for discretization
+  // dc.gamunitconv      = 1.0/pow(1E4, 4.0);		     				// Unit of gam is L^-4 - um^-4: convert to A^-4
+  dc.gamunitconv      = 1.0;		    	     					// Unit of gam is L^-4 - um^-4: convert to A^-4
 
 
   /* System initialization */
@@ -88,6 +103,7 @@ int 	main(int argc, char* argv[])
   s.IRs_pqrcountmat   = gsl_matrix_alloc(r.nmodes, 3);
   s.frvec             = gsl_vector_alloc(r.nmodes);
   s.gamvec            = gsl_vector_alloc(r.nmodes);
+  s.Athvec            = gsl_vector_alloc(r.nmodes);
   s.mvec              = gsl_vector_alloc(r.nmodes);
   s.qvec              = gsl_vector_alloc(r.nmodes);
   s.qdotvec           = gsl_vector_alloc(r.nmodes);
@@ -138,5 +154,10 @@ int 	main(int argc, char* argv[])
   }
   StateStore(&s, r);
   gsl_rng_free(gr);
+ 
+  clock_gettime(CLOCK_MONOTONIC_RAW, &end); 
+  printf("# Total time = %f seconds\n",
+            (end.tv_nsec - begin.tv_nsec) / 1000000000.0 +
+            (end.tv_sec  - begin.tv_sec));
 }
 

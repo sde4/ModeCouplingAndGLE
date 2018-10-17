@@ -19,7 +19,7 @@ void StateStore(sys_var* s, run_param r) {
   char outfname[40];
 
   // trajectory file !!
-  outfp = fopen("read.restart", "w");
+  outfp = fopen("read.restart", "a");
   fprintf(outfp, "%d\n", s->step);
   // printf("%d\n", s->step);
   for (i=0; i<s->NmodeIRcou; i++){

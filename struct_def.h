@@ -10,9 +10,12 @@
 
 #define PI            3.14159265358979323846
 #define kB            8.6173303E-5            // eV/K
-#define Npm_eVpA2     0.0624150912
-#define kgpm2_amupA2  6.022E6
-#define amuA2pns2_eV  1.03642696E-10
+// #define Npm_eVpA2     0.0624150912
+#define Npm_eVpum2    6.24150912E6
+// #define kgpm2_amupA2  6.022E6
+#define kgpm2_amupum2  6.022E14
+// #define amuA2pns2_eV  1.03642696E-10
+#define amuum2pns2_eV  1.03642696E-2
 
 typedef struct {
   double        dt;                            // ns
@@ -20,6 +23,8 @@ typedef struct {
   int           nfreq;
   int           nmodes;
   int           nsteps;
+  int           pertmodind;
+  double        pertEval;
   }             run_param;
 
 typedef struct {
@@ -35,6 +40,7 @@ typedef struct {
   gsl_matrix    *alphamatsorted;
   gsl_vector    *detuningsorted;
   gsl_vector    *gamvec;
+  gsl_vector    *Athvec;
   gsl_vector    *mvec;
   gsl_vector    *qvec;
   gsl_vector    *qdotvec;
@@ -57,9 +63,13 @@ typedef struct {
 
 typedef struct {
   double        kb;                           // eV
-  double        Et;                           // eV/A^2
-  double        DEt;                          // eV/A^2
-  double        rho;                          // eV/(A^4/ns^2)
+  double        Et;                           // eV/um^2
+  double        DEt;                          // eV/um^2
+  double        tausig;                       // ns
+  double        rho;                          // eV/(um^4/ns^2)
+  // double        Et;                           // eV/A^2
+  // double        DEt;                          // eV/A^2
+  // double        rho;                          // eV/(A^4/ns^2)
   double        gam;                          // 1/ns
   double        alpha;                        
   }             mat_const;

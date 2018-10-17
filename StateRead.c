@@ -44,9 +44,13 @@ void StateRead(sys_var* s, run_param r) {
 
   }
   fclose(infp);
-  // Initial perturbation of 20 KBT to mode 1
-  // gsl_vector_set(s->qvec, 0, pow(10 * kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5));
-  // gsl_vector_set(s->qdotvec, 0, pow(10 * kB * sv.T / m, 0.5));
+
+  // Initial perturbation energy to one of the modes
+  m 	 = gsl_vector_get(s->mvec, r.pertmodind-1);
+  // qdot_t = gsl_vector_get(s->qdotvec, r.pertmodind-1);
+  // qdot_t += pow(2*r.pertEval/m, 0.5);
+  qdot_t = pow(2*r.pertEval/m, 0.5);
+  gsl_vector_set(s->qdotvec, r.pertmodind-1, qdot_t);
 
 
   /**************************/
