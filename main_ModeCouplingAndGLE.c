@@ -52,45 +52,61 @@ int 	main(int argc, char* argv[])
   // sc.nmax             = atoi(argv[2]);
   // sc.Lx               = 0.04E4; // A
   // sc.Ly               = 0.04E4; // A
-  sc.Lx               = 1.00; // um
-  sc.Ly               = 1.00; // um
+  // sc.Lx               = 10; // um
+  // sc.Ly               = 10; // um
+  sc.Lx               = 0.005; // 100um
+  sc.Ly               = 0.005; // 100um
   sc.run_id           = 1;
 
   // State variables !!
   sv.T                = atof(argv[4]);                       				// K
-  sv.e_pre            = 1E-4;
+  sv.e_pre            = 1E-6;
 
   // Material constants !!
-  mc.kb               = 1.5;                        	      				 // eV
-  // mc.Et               = 340*Npm_eVpA2;                       			 // eV/A^2
-  // mc.DEt              = 40*Npm_eVpA2;                        			 // eV/A^2
-  // mc.rho              = 7.4E-7*kgpm2_amupA2*amuA2pns2_eV;     			// eV/(A^4/ns^2)
-  mc.Et               = 331.0*Npm_eVpum2;                        				// eV/um^2
-  mc.DEt              = sv.T/300.0*(0.02202/(0.0004643 + sv.e_pre))*Npm_eVpum2;		// eV/um^2
-  mc.tausig           = 500./1.0E3;                         				// ns
-  mc.rho              = 7.4E-7*kgpm2_amupum2*amuum2pns2_eV;    				// eV/(um^4/ns^2)
+  mc.kb               = 1.5;                        	      				 	// eV
+  // mc.Et               = 340*Npm_eVpA2;                       			 	// eV/A^2
+  // mc.DEt              = 40*Npm_eVpA2;                        			 	// eV/A^2
+  // mc.rho              = 7.4E-7*kgpm2_amupA2*amuA2pns2_eV;     				// eV/(A^4/ns^2)
+  // mc.Et               = 331.0*Npm_eVpum2;                        				// eV/um^2
+  // mc.DEt              = 3.09754e+01*Npm_eVpum2;						// eV/um^2
+  // mc.tausig           = 4.35758e+02/1.0E3;                         				// ns
+  // mc.rho              = 7.4E-7*kgpm2_amupum2*amuum2pns2_eV;    				// eV/(um^4/ns^2)
+  mc.Et               = 331.0*Npm_eVp100um2;                        			// eV/100um^2
+  mc.DEt              = 3.09754e+01*Npm_eVp100um2;					// eV/100um^2
+  mc.tausig           = 4.35758e+02/1.0E3;                         			// ns
+  mc.rho              = 7.4E-7*kgpm2_amup100um2*amu100um2pns2_eV;    			// eV/(100um^4/ns^2)
   mc.gam 	      = atof(argv[5]);			                  		// 1/ns
   // mc.alpha            = atof(argv[4]);
 
   // Run Parameters !!
+  double R, lamhcut, nmodecut;
   r.dt                = atof(argv[2]);                        				// ns
   r.runtime           = atof(argv[3]);                                  		// ns
   r.nfreq             = 20;
-  r.nmodes            = sc.max*(sc.max+1)/2 + 6;						// Change if needed !!!!!!!!!!!!!!!!!!!   
+  r.nmodes            = sc.max*(sc.max+1)/2;						// Change if needed !!!!!!!!!!!!!!!!!!!   
   r.pertmodind        = (int) atoi(argv[9]);   
   r.pertEval          = kB*sv.T*atof(argv[10]);  	      				// eV 
+  R		      = 5.0;								// assuming stretching energy << bending energy for R>10
+  lamhcut	      = pow(2*PI*PI*mc.kb/(mc.Et*sv.e_pre*R), 0.5);
+  nmodecut            = sc.Lx*sc.Ly/(lamhcut*lamhcut);
+  r.modefact          = nmodecut/r.nmodes;
 
   // Discretization Constants !!
   dc.Nfx              = 51;                                  				// set by mathematica wrapper
   dc.Nfy              = 51;                                  				// set by mathematica wrapper
   // dc.Lx 	      = sc.Lx/(1E4);			     				// um - using different unit of length for discretization
   // dc.Ly 	      = sc.Ly/(1E4);			     				// um - using different unit of length for discretization
-  dc.Lx 	      = sc.Lx;			     					// um - using same unit of length for discretization
-  dc.Ly 	      = sc.Ly;			     					// um - using same unit of length for discretization
-  dc.hx 	      = dc.Lx/(dc.Nfx-1.0);		     				// um - using different unit of length for discretization
-  dc.hy 	      = dc.Ly/(dc.Nfy-1.0); 	 	     				// um - using different unit of length for discretization
+  // dc.Lx 	      = sc.Lx;			     					// um - using same unit of length for discretization
+  // dc.Ly 	      = sc.Ly;			     					// um - using same unit of length for discretization
+  // dc.hx 	      = dc.Lx/(dc.Nfx-1.0);		     				// um - using different unit of length for discretization
+  // dc.hy 	      = dc.Ly/(dc.Nfy-1.0); 	 	     				// um - using different unit of length for discretization
+  dc.Lx 	      = sc.Lx;			     					// 100um - using same unit of length for discretization
+  dc.Ly 	      = sc.Ly;			     					// 100um - using same unit of length for discretization
+  dc.hx 	      = dc.Lx/(dc.Nfx-1.0);		     				// 100um - using different unit of length for discretization
+  dc.hy 	      = dc.Ly/(dc.Nfy-1.0); 	 	     				// 100um - using different unit of length for discretization
   // dc.gamunitconv      = 1.0/pow(1E4, 4.0);		     				// Unit of gam is L^-4 - um^-4: convert to A^-4
-  dc.gamunitconv      = 1.0;		    	     					// Unit of gam is L^-4 - um^-4: convert to A^-4
+  // dc.gamunitconv      = 1.0;		    	     					// Unit of gam is L^-4 - um^-4: convert to um^-4
+  dc.gamunitconv      = 1.0;		    	     					// Unit of gam is L^-4 - 100um^-4: convert to 100um^-4
 
 
   /* System initialization */
@@ -119,7 +135,7 @@ int 	main(int argc, char* argv[])
   sysmode[1] = "Read";
   statemode[0] = "Init";
   statemode[1] = "Read";
-  printf("#    o No. of modes:\t%d\n#    o timestep:\t%2.2e ns\n#    o dumpstep:\t%2.2e ns\n#    o runtime:\t\t%2.2e ns\n#    o temp:\t\t%2.2e K\n#    o gam:\t\t%2.2e 1/ns\n#    o tol:\t\t%2.2e\n#    o sysmode:\t\t%s\n#    o statemode:\t%s\n#    o seed:\t\t%d\n", r.nmodes, r.dt, r.dt*r.nfreq, r.runtime, sv.T, mc.gam, s.tol, sysmode[s.systyp], statemode[s.statetyp], seed);
+  printf("#    o No. of modes:\t%d\n#    o Mode scal fact:\t%lf\n#    o timestep:\t%2.2e ns\n#    o dumpstep:\t%2.2e ns\n#    o runtime:\t\t%2.2e ns\n#    o temp:\t\t%2.2e K\n#    o gam:\t\t%2.2e 1/ns\n#    o tol:\t\t%2.2e\n#    o sysmode:\t\t%s\n#    o statemode:\t%s\n#    o seed:\t\t%d\n", r.nmodes, r.modefact, r.dt, r.dt*r.nfreq, r.runtime, sv.T, mc.gam, s.tol, sysmode[s.systyp], statemode[s.statetyp], seed);
 
   // Random number initialization
   const gsl_rng_type * gT;

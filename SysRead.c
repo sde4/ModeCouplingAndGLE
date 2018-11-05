@@ -15,7 +15,7 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   int idat;
   int sind;
   double fdat;
-  double N, Nj, lamh, fr, fri;
+  double N, Nj, ilamhx, ilamhy, ilamh, lamh, fr, fri;
   double gam, Ath, DissViscElas, DissOscillator;
   double m;
   double sig;
@@ -60,7 +60,7 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
  
   // Count no. of modes in each symmetry group !! 
   cou1 = 0; cou2 = 0; cou3 = 0; cou4 = 0; cou5 = 0;
-  for (k=1; k<=3; k++) {
+  for (k=1; k<=sc.max; k++) {
     for (j=1; j<=k; j++) {
       for (i=1; i<=j; i++) {    // neglecting symmetric pairs i.e. only one of (m,n) and (n,m) will be chosen assuming the membrane is square 
         if (j==k || i==k) {
@@ -93,39 +93,39 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
       }
     }
   }
-  for (k=1; k<=sc.max; k++) {
-    for (j=1; j<=k; j++) {
-      for (i=1; i<=j; i++) {    // neglecting symmetric pairs i.e. only one of (m,n) and (n,m) will be chosen assuming the membrane is square 
-        if (j==k || i==k) {
-          mord = 25*i;
-          nord = 25*j;
-          gsl_matrix_set(s->modindmat, cou1, 0, mord);
-          gsl_matrix_set(s->modindmat, cou1, 1, nord);
-          gsl_vector_set(s->modindvec, cou1, cou1 + 1);
+  //for (k=1; k<=sc.max; k++) {
+  //  for (j=1; j<=k; j++) {
+  //    for (i=1; i<=j; i++) {    // neglecting symmetric pairs i.e. only one of (m,n) and (n,m) will be chosen assuming the membrane is square 
+  //      if (j==k || i==k) {
+  //        mord = 25*i;
+  //        nord = 25*j;
+  //        gsl_matrix_set(s->modindmat, cou1, 0, mord);
+  //        gsl_matrix_set(s->modindmat, cou1, 1, nord);
+  //        gsl_vector_set(s->modindvec, cou1, cou1 + 1);
 
-          // Mode grouping based on symmetry!!
-          // 4 groups: SS, SA, AS, AA
-          if ((mord%2 == 1) && (nord%2 == 1)) {
-            gsl_vector_set(s->SSmodindvec, cou2, cou1 + 1);
-            cou2++;
-          }
-          if ((mord%2 == 1) && (nord%2 == 0)) {
-            gsl_vector_set(s->SAmodindvec, cou3, cou1 + 1);
-            cou3++;
-          }
-          if ((mord%2 == 0) && (nord%2 == 1)) {
-            gsl_vector_set(s->ASmodindvec, cou4, cou1 + 1);
-            cou4++;
-          }
-          if ((mord%2 == 0) && (nord%2 == 0)) {
-            gsl_vector_set(s->AAmodindvec, cou5, cou1 + 1);
-            cou5++;
-          }
-          cou1++;
-        }
-      }
-    }
-  }
+  //        // Mode grouping based on symmetry!!
+  //        // 4 groups: SS, SA, AS, AA
+  //        if ((mord%2 == 1) && (nord%2 == 1)) {
+  //          gsl_vector_set(s->SSmodindvec, cou2, cou1 + 1);
+  //          cou2++;
+  //        }
+  //        if ((mord%2 == 1) && (nord%2 == 0)) {
+  //          gsl_vector_set(s->SAmodindvec, cou3, cou1 + 1);
+  //          cou3++;
+  //        }
+  //        if ((mord%2 == 0) && (nord%2 == 1)) {
+  //          gsl_vector_set(s->ASmodindvec, cou4, cou1 + 1);
+  //          cou4++;
+  //        }
+  //        if ((mord%2 == 0) && (nord%2 == 0)) {
+  //          gsl_vector_set(s->AAmodindvec, cou5, cou1 + 1);
+  //          cou5++;
+  //        }
+  //        cou1++;
+  //      }
+  //    }
+  //  }
+  //}
   s->SScou = cou2;
   s->SAcou = cou3;
   s->AScou = cou4;
@@ -218,6 +218,7 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   /**************************/
   for (i = 0; i < r.nmodes; i++) {
     fri = gsl_vector_get(s->frvec, i);
+
     m = gsl_vector_get(s->mvec, i);
 
     /**************************/
@@ -225,6 +226,9 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     /**************************/
     mord = gsl_matrix_get(s->modindmat, i, 0);
     nord = gsl_matrix_get(s->modindmat, i, 1);
+    ilamhx  = mord/sc.Lx;
+    ilamhy  = nord/sc.Ly;
+    ilamh   = pow((ilamhx*ilamhx + ilamhy*ilamhy)/2.0, 0.5);        // 2/lamh^2 = 1/lamx^2 + 1/lamy^2;
     Ath = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5);
     gsl_vector_set(s->Athvec, i, Ath);
 
@@ -235,7 +239,8 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
       gam = mc.gam + DissViscElas/DissOscillator;   	// intrinsic + user specified
     }
     else if (mc.gam == -1.0){
-      gam = DissViscElas/DissOscillator;   		// intrinsic
+      gam = DissViscElas/DissOscillator;   				// intrinsic for device scale obtained from constitutive reln
+      // gam = 1000./pow(10.0, 0.63834*pow(ilamh*1E-4, -0.30952));         // intrinsic for MD scale obtained from fitting MD data parameterized for prestrain = 0.001, fitted parameters time-ns, length -Ang
     }
     else if (mc.gam == 0.0){
       gam = 0.0;   					// zero

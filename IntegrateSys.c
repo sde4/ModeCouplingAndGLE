@@ -143,8 +143,8 @@ void	IntegrateSys(sys_var *s, run_param r, gsl_rng * gr, state_var sv)
       // f_tp1    = pow(-gsl_vector_get (s->fvec, sind-1)/q_t, 0.5)/(2*PI);
       m        = gsl_vector_get(s->mvec, sind-1);
       fr       = gsl_vector_get(s->frvec, sind-1);
-      teng     = 0.5*m*qdot_tp1*qdot_tp1 + 0.5*m*2*PI*fr*2*PI*fr*q_t*q_t;
-      systeng += teng + m*gsl_vector_get(s->enonvec, sind-1);
+      teng     = 0.5*m*qdot_tp1*qdot_tp1 + 0.5*m*2*PI*fr*2*PI*fr*q_t*q_t + m*gsl_vector_get(s->enonvec, sind-1);
+      systeng += teng;
 
       // sprintf(outfname, "modeteng.%04d.txt", sind);
       // outfp = fopen(outfname, "a");

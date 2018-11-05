@@ -10,7 +10,7 @@ for_var	ForceSys(sys_var s, run_param r, int j)
   int 	cou2, lo, hi;
   double fr;
   double q_s, q_p, q_q, q_r;
-  double alpha, mult;
+  double alpha, mult, f3ssss, ep4ssss;
   for_var f;
 
   sind  = (int) gsl_matrix_get(s.IRs_pqrcountmat, j, 0);
@@ -38,15 +38,25 @@ for_var	ForceSys(sys_var s, run_param r, int j)
     // if ( ((sind==pind) && (qind==rind)) || ((sind==qind) && (pind==rind)) || ((sind==rind) && (pind==qind)) ){
     // if ( (sind==pind) || (qind==rind) || (sind==qind) || (pind==rind) || (sind==rind) || (pind==qind) ){
     // printf("%d\t%d\t%d\t%d\n", sind, pind, qind, rind);
+
     q_p   = gsl_vector_get(s.qvec, pind-1);
     q_q   = gsl_vector_get(s.qvec, qind-1);
     q_r   = gsl_vector_get(s.qvec, rind-1);
 		
     alpha = gsl_matrix_get(s.alphamatsorted, cou2, 0)*mult;
-    f.f3  = f.f3 - alpha*q_p*q_q*q_r;
-    f.ep4 = f.ep4 + alpha*q_p*q_q*q_r*q_s/4.0;
-    // }
+
+    if ( sind==pind && pind==qind && qind==rind ){
+      f3ssss  = -alpha*q_p*q_q*q_r;
+      ep4ssss = alpha*q_p*q_q*q_r*q_s/4.0;
+    }
+    else
+    {
+      f.f3  = f.f3 - alpha*q_p*q_q*q_r;
+      f.ep4 = f.ep4 + alpha*q_p*q_q*q_r*q_s/4.0;
+    }
   }
+  f.f3 = f.f3*r.modefact + f3ssss;
+  f.ep4 = f.ep4*r.modefact + ep4ssss;
 
   return f;
 }

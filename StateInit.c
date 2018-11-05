@@ -94,8 +94,8 @@ void StateInit(sys_var* s, run_param r, state_var sv, gsl_rng* gr) {
     gsl_vector_set (s->enonvec, sind-1, f.ep4);
     m        = gsl_vector_get(s->mvec, sind-1);
     fr       = gsl_vector_get(s->frvec, sind-1);
-    teng     = 0.5*m*qdot_t*qdot_t + 0.5*m*2*PI*fr*2*PI*fr*q_t*q_t;
-    systeng += teng + m*gsl_vector_get(s->enonvec, sind-1);
+    teng     = 0.5*m*qdot_t*qdot_t + 0.5*m*2*PI*fr*2*PI*fr*q_t*q_t + m*gsl_vector_get(s->enonvec, sind-1);
+    systeng += teng;
 
     // sprintf(outfname, "modeteng.%04d.txt", sind);
     // outfp = fopen(outfname, "w");
