@@ -24,6 +24,8 @@ for_var	ForceSys(sys_var s, run_param r, int j)
 
   f.f3 	= 0.0;
   f.ep4 = 0.0;
+  f3ssss = 0.0;
+  ep4ssss = 0.0;
   for (cou2=lo; cou2<hi; cou2++)
   {
     pind  = (int) gsl_matrix_get(s.IRs_pqrcombmatsorted, cou2, 1);
@@ -37,6 +39,7 @@ for_var	ForceSys(sys_var s, run_param r, int j)
     // if ( !((sind!=pind) && (sind!=qind) && (sind!=rind) && (pind!=qind) && (pind!=rind) && (qind!=rind)) ){
     // if ( ((sind==pind) && (qind==rind)) || ((sind==qind) && (pind==rind)) || ((sind==rind) && (pind==qind)) ){
     // if ( (sind==pind) || (qind==rind) || (sind==qind) || (pind==rind) || (sind==rind) || (pind==qind) ){
+    // if ( sind==1 ){
     // printf("%d\t%d\t%d\t%d\n", sind, pind, qind, rind);
 
     q_p   = gsl_vector_get(s.qvec, pind-1);

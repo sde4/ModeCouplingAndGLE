@@ -29,7 +29,7 @@ int 	main(int argc, char* argv[])
   if ((argc-1)!=gargc) 
   {
    printf("ERROR: no. of arguments given %d, needed %d\n", (argc-1), gargc);
-   printf("ERROR: specify 9 arguments: 1. max 2. timestep (ns)  3. runtime (ns)  4. temp (K)  5. gam  6. tol  7. sys-init(0)/read(1)  8. state-init(0)/read(1)  9. pertmodeind  10. pertEscal  11. seed\n");
+   printf("ERROR: specify 9 arguments: 1. max 2. timestep (100ns)  3. runtime (100ns)  4. temp (K)  5. gam  6. tol  7. sys-init(0)/read(1)  8. state-init(0)/read(1)  9. pertmodeind  10. pertEscal  11. seed\n");
    exit(1);
   }
 
@@ -54,13 +54,13 @@ int 	main(int argc, char* argv[])
   // sc.Ly               = 0.04E4; // A
   // sc.Lx               = 10; // um
   // sc.Ly               = 10; // um
-  sc.Lx               = 0.005; // 100um
-  sc.Ly               = 0.005; // 100um
+  sc.Lx               = 0.5; // 100um
+  sc.Ly               = 0.5; // 100um
   sc.run_id           = 1;
 
   // State variables !!
   sv.T                = atof(argv[4]);                       				// K
-  sv.e_pre            = 1E-6;
+  sv.e_pre            = 1E-4;
 
   // Material constants !!
   mc.kb               = 1.5;                        	      				 	// eV
@@ -72,24 +72,24 @@ int 	main(int argc, char* argv[])
   // mc.tausig           = 4.35758e+02/1.0E3;                         				// ns
   // mc.rho              = 7.4E-7*kgpm2_amupum2*amuum2pns2_eV;    				// eV/(um^4/ns^2)
   mc.Et               = 331.0*Npm_eVp100um2;                        			// eV/100um^2
-  mc.DEt              = 3.09754e+01*Npm_eVp100um2;					// eV/100um^2
-  mc.tausig           = 4.35758e+02/1.0E3;                         			// ns
-  mc.rho              = 7.4E-7*kgpm2_amup100um2*amu100um2pns2_eV;    			// eV/(100um^4/ns^2)
-  mc.gam 	      = atof(argv[5]);			                  		// 1/ns
+  mc.DEt              = 0.02174/(sv.e_pre+0.0004394)*Npm_eVp100um2;			// eV/100um^2
+  mc.tausig           = 4.35758e+02/1.0E3/1.0E2;                         		// 100ns
+  mc.rho              = 7.4E-7*kgpm2_amup100um2*amu100um2p100ns2_eV;    		// eV/(100um^4/100ns^2)
+  mc.gam 	      = atof(argv[5]);			                  		// 1/100ns
   // mc.alpha            = atof(argv[4]);
 
   // Run Parameters !!
   double R, lamhcut, nmodecut;
-  r.dt                = atof(argv[2]);                        				// ns
-  r.runtime           = atof(argv[3]);                                  		// ns
+  r.dt                = atof(argv[2]);                        				// 100ns
+  r.runtime           = atof(argv[3]);                                  		// 100ns
   r.nfreq             = 20;
   r.nmodes            = sc.max*(sc.max+1)/2;						// Change if needed !!!!!!!!!!!!!!!!!!!   
   r.pertmodind        = (int) atoi(argv[9]);   
   r.pertEval          = kB*sv.T*atof(argv[10]);  	      				// eV 
-  R		      = 5.0;								// assuming stretching energy << bending energy for R>10
+  R		      = 1.0;								// assuming stretching energy << bending energy for R>10
   lamhcut	      = pow(2*PI*PI*mc.kb/(mc.Et*sv.e_pre*R), 0.5);
-  nmodecut            = sc.Lx*sc.Ly/(lamhcut*lamhcut);
-  r.modefact          = nmodecut/r.nmodes;
+  r.nmodecut          = sc.Lx*sc.Ly/(lamhcut*lamhcut);
+  r.modefact          = r.nmodecut/r.nmodes;
 
   // Discretization Constants !!
   dc.Nfx              = 51;                                  				// set by mathematica wrapper
@@ -135,7 +135,7 @@ int 	main(int argc, char* argv[])
   sysmode[1] = "Read";
   statemode[0] = "Init";
   statemode[1] = "Read";
-  printf("#    o No. of modes:\t%d\n#    o Mode scal fact:\t%lf\n#    o timestep:\t%2.2e ns\n#    o dumpstep:\t%2.2e ns\n#    o runtime:\t\t%2.2e ns\n#    o temp:\t\t%2.2e K\n#    o gam:\t\t%2.2e 1/ns\n#    o tol:\t\t%2.2e\n#    o sysmode:\t\t%s\n#    o statemode:\t%s\n#    o seed:\t\t%d\n", r.nmodes, r.modefact, r.dt, r.dt*r.nfreq, r.runtime, sv.T, mc.gam, s.tol, sysmode[s.systyp], statemode[s.statetyp], seed);
+  printf("#    o Sides:\t\t%2.2e um\n#    o No. of modes:\t%d\n#    o Mode scal fact:\t%lf\n#    o timestep:\t%2.2e 100ns\n#    o dumpstep:\t%2.2e 100ns\n#    o runtime:\t\t%2.2e 100ns\n#    o temp:\t\t%2.2e K\n#    o gam:\t\t%2.2e 1/100ns\n#    o tol:\t\t%2.2e\n#    o sysmode:\t\t%s\n#    o statemode:\t%s\n#    o Pre-strain:\t%2.2e\n#    o DEt:\t\t%2.2e N/m\n#    o tau_sig:\t\t%2.2e 100ns\n#    o seed:\t\t%d\n", sc.Lx*100, r.nmodes, r.modefact, r.dt, r.dt*r.nfreq, r.runtime, sv.T, mc.gam, s.tol, sysmode[s.systyp], statemode[s.statetyp], sv.e_pre, mc.DEt/Npm_eVp100um2, mc.tausig, seed);
 
   // Random number initialization
   const gsl_rng_type * gT;

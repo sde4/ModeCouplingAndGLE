@@ -14,11 +14,11 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   int mord, nord, pord, qord;
   int idat;
   int sind;
-  double fdat;
-  double N, Nj, ilamhx, ilamhy, ilamh, lamh, fr, fri;
-  double gam, Ath, DissViscElas, DissOscillator;
-  double m;
+  double m, gam, fri, Ath;
   double sig;
+  double N, Nj, R, ilamhx, ilamhy, ilamh, lamh;
+  double gamavg, DissViscElas, DissOscillator;
+  double fdat;
   for_var f;
   FILE *infp, *outfp;
   char outfname[40];
@@ -29,7 +29,7 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
 
   printf("#    o Input file required: 1. frvec.dat 2. IRs_pqrcombmatsorted.dat\n");
   printf("#                           3. IRs_pqrcountmat.dat 4. alphamatsorted.dat\n");
-  printf("#                           5. mvec.dat\n");
+  printf("#                           5. Athvec.dat\n");
   // check for the required input files
 
   if ((infp=fopen("frvec.dat", "r")) == NULL) 
@@ -52,7 +52,7 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
      printf("#      ERROR: File 4 not found! \n");
      exit(1);
   }
-  if ((infp=fopen("mvec.dat", "r")) == NULL) 
+  if ((infp=fopen("Athvec.dat", "r")) == NULL) 
   {
      printf("#      ERROR: File 5 not found! \n");
      exit(1);
@@ -139,6 +139,14 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   }
   fclose(infp);
 
+  // Athvec file !!
+  infp = fopen("Athvec.dat", "r");
+  for (i = 0; i < r.nmodes; i++) {
+    fscanf(infp, "%lf", &fdat);
+    gsl_vector_set(s->Athvec, i, fdat);
+  }
+  fclose(infp);
+
   // IR comb sorted file !!
   infp = fopen("IRs_pqrcombmatsorted.dat", "r");
   cou1 = 0;
@@ -205,51 +213,73 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   }
   fclose(infp);
   
-  // mass file !!
-  infp = fopen("mvec.dat", "r");
-  for (i = 0; i < r.nmodes; i++) {
-    fscanf(infp, "%lf", &fdat);
-    gsl_vector_set(s->mvec, i, fdat);
+  /**************************/
+  // mass calculation !!
+  /**************************/
+  m = mc.rho * sc.Lx * sc.Ly/4;   // meff=m/4 https://arxiv.org/pdf/1305.0557.pdf
+
+  /**************************/
+  // friction calculation !!
+  /**************************/
+  gamavg = 0;
+  if (mc.gam == -1.0){
+    for (j=1; j<=round(pow(r.nmodecut, 0.5)); j++) {
+      for (i=1; i<=round(pow(r.nmodecut, 0.5)); i++) { 
+        mord    = i;
+        nord    = j;
+        ilamhx  = mord/sc.Lx;
+        ilamhy  = nord/sc.Ly;
+        ilamh   = pow((ilamhx*ilamhx + ilamhy*ilamhy)/2.0, 0.5);        // 2/lamh^2 = 1/lamx^2 + 1/lamy^2;
+        lamh    = 1.0/ilamh;
+        R       = 2*PI*PI*mc.kb/(mc.Et*sv.e_pre*lamh*lamh);
+
+        fri     = 1/(2*lamh)*pow(2*mc.Et*sv.e_pre*(1+R)/(mc.rho), 0.5);
+        Ath     = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5);
+
+        DissViscElas = mc.DEt*pow(PI,5.0)*pow(Ath, 4.0)*( 9*pow(sc.Ly,4.0)*pow(mord,4.0) + 2*pow(sc.Lx,2.0)*pow(sc.Ly,2.0)*pow(mord,2.0)*pow(nord,2.0) + 9*pow(sc.Lx,4.0)*pow(nord,4.0) )/(256*pow(sc.Lx*sc.Ly,3.0)) * ((2*PI*fri*mc.tausig)/(1 + (2*PI*fri*mc.tausig)*(2*PI*fri*mc.tausig)) );
+        DissOscillator = 1/2.0*PI*m*(2*PI*fri)*pow(Ath, 2.0);
+        gamavg  += DissViscElas/DissOscillator;   		     // intrinsic
+      }
+    }
+    gamavg = gamavg/round(r.nmodecut);
   }
-  fclose(infp);
 
   /**************************/
   // Rest of the initializations !!
   /**************************/
   for (i = 0; i < r.nmodes; i++) {
     fri = gsl_vector_get(s->frvec, i);
-
-    m = gsl_vector_get(s->mvec, i);
+    Ath = gsl_vector_get(s->Athvec, i);
 
     /**************************/
-    // friction calculation !!
+    // mass assignment !!
     /**************************/
-    mord = gsl_matrix_get(s->modindmat, i, 0);
-    nord = gsl_matrix_get(s->modindmat, i, 1);
-    ilamhx  = mord/sc.Lx;
-    ilamhy  = nord/sc.Ly;
-    ilamh   = pow((ilamhx*ilamhx + ilamhy*ilamhy)/2.0, 0.5);        // 2/lamh^2 = 1/lamx^2 + 1/lamy^2;
-    Ath = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5);
-    gsl_vector_set(s->Athvec, i, Ath);
+    gsl_vector_set(s->mvec, i, m);
 
-    DissViscElas = mc.DEt*pow(PI,5.0)*pow(Ath, 4.0)*( 9*pow(sc.Ly,4.0)*pow(mord,4.0) + 2*pow(sc.Lx,2.0)*pow(sc.Ly,2.0)*pow(mord,2.0)*pow(nord,2.0) + 9*pow(sc.Lx,4.0)*pow(nord,4.0) )/(256*pow(sc.Lx*sc.Ly,3.0)) * ((2*PI*fri*mc.tausig)/(1 + (2*PI*fri*mc.tausig)*(2*PI*fri*mc.tausig)) );
-    DissOscillator = 1/2.0*PI*m*(2*PI*fri)*pow(Ath, 2.0);
-
+    /**************************/
+    // friction assignment !!
+    /**************************/
     if (mc.gam > 0.0 ){
+      DissViscElas = mc.DEt*pow(PI,5.0)*pow(Ath, 4.0)*( 9*pow(sc.Ly,4.0)*pow(mord,4.0) + 2*pow(sc.Lx,2.0)*pow(sc.Ly,2.0)*pow(mord,2.0)*pow(nord,2.0) + 9*pow(sc.Lx,4.0)*pow(nord,4.0) )/(256*pow(sc.Lx*sc.Ly,3.0)) * ((2*PI*fri*mc.tausig)/(1 + (2*PI*fri*mc.tausig)*(2*PI*fri*mc.tausig)) );
+      DissOscillator = 1/2.0*PI*m*(2*PI*fri)*pow(Ath, 2.0);
       gam = mc.gam + DissViscElas/DissOscillator;   	// intrinsic + user specified
     }
     else if (mc.gam == -1.0){
-      gam = DissViscElas/DissOscillator;   				// intrinsic for device scale obtained from constitutive reln
-      // gam = 1000./pow(10.0, 0.63834*pow(ilamh*1E-4, -0.30952));         // intrinsic for MD scale obtained from fitting MD data parameterized for prestrain = 0.001, fitted parameters time-ns, length -Ang
+      gam = gamavg;   				// intrinsic for device scale obtained from constitutive reln
+    }
+    else if (mc.gam == -2.0){
+      // DissViscElas = mc.DEt*pow(PI,5.0)*pow(Ath, 4.0)*( 9*pow(sc.Ly,4.0)*pow(mord,4.0) + 2*pow(sc.Lx,2.0)*pow(sc.Ly,2.0)*pow(mord,2.0)*pow(nord,2.0) + 9*pow(sc.Lx,4.0)*pow(nord,4.0) )/(256*pow(sc.Lx*sc.Ly,3.0)) * ((2*PI*fri*mc.tausig)/(1 + (2*PI*fri*mc.tausig)*(2*PI*fri*mc.tausig)) );
+      // DissOscillator = 1/2.0*PI*m*(2*PI*fri)*pow(Ath, 2.0);
+      // gam = DissViscElas/DissOscillator;   				// intrinsic for device scale obtained from constitutive reln
+      gam = 1000./pow(10.0, 0.63834*pow(ilamh*1E-4, -0.30952));         // intrinsic for MD scale obtained from fitting MD data parameterized for prestrain = 0.001, fitted parameters time-ns, length -Ang
     }
     else if (mc.gam == 0.0){
       gam = 0.0;   					// zero
     }
-
     gsl_vector_set(s->gamvec, i, gam);
 
     /**************************/
-    // noise calculation !!
+    // noise assignment !!
     /**************************/
     sig = pow(2 * kB * sv.T * gam / m, 0.5);
     gsl_vector_set(s->sigvec, i, sig);
@@ -278,17 +308,17 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   /**************************/
   // Writing files !!
   /**************************/
-
-  // Thermal amplitude file !!
-  outfp = fopen("Athvec.txt", "w");
+  // mass file !!
+  outfp = fopen("mvec.txt", "w");
   for (i = 0; i < r.nmodes - 1; i++) {
-    fprintf(outfp, "%5.5e\n", gsl_vector_get(s->Athvec, i));
+    fprintf(outfp, "%5.5e\n", gsl_vector_get(s->mvec, i));
   }
-  fprintf(outfp, "%5.5e", gsl_vector_get(s->Athvec, i));
+  fprintf(outfp, "%5.5e", gsl_vector_get(s->mvec, i));
   fclose(outfp);
-  
+ 
   // friction file !!
-  outfp = fopen("gamvec.txt", "w");
+  sprintf(outfname, "gamvec.%d.txt", s->statetyp);
+  outfp = fopen(outfname, "w");
   for (i = 0; i < r.nmodes - 1; i++) {
     fprintf(outfp, "%5.5e\n", gsl_vector_get(s->gamvec, i));
   }

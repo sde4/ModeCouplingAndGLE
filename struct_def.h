@@ -18,13 +18,15 @@
 #define kgpm2_amup100um2  6.022E18
 // #define amuA2pns2_eV  1.03642696E-10
 // #define amuum2pns2_eV  1.03642696E-2
-#define amu100um2pns2_eV  1.03642696E2
+// #define amu100um2pns2_eV  1.03642696E2
+#define amu100um2p100ns2_eV  1.03642696E-2
 
 typedef struct {
-  double        dt;                            // ns
-  double        runtime;                       // ns
+  double        dt;                            // 100ns
+  double        runtime;                       // 100ns
   int           nfreq;
   int           nmodes;
+  double        nmodecut;
   double        modefact;
   int           nsteps;
   int           pertmodind;
@@ -67,14 +69,14 @@ typedef struct {
 
 typedef struct {
   double        kb;                           // eV
-  double        Et;                           // eV/um^2
-  double        DEt;                          // eV/um^2
-  double        tausig;                       // ns
-  double        rho;                          // eV/(um^4/ns^2)
+  double        Et;                           // eV/100um^2
+  double        DEt;                          // eV/100um^2
+  double        tausig;                       // 100ns
+  double        rho;                          // eV/(100um^4/100ns^2)
   // double        Et;                           // eV/A^2
   // double        DEt;                          // eV/A^2
   // double        rho;                          // eV/(A^4/ns^2)
-  double        gam;                          // 1/ns
+  double        gam;                          // 1/100ns
   double        alpha;                        
   }             mat_const;
 
