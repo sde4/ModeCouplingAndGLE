@@ -41,6 +41,7 @@ typedef struct {
   gsl_vector    *ASmodindvec;
   gsl_vector    *AAmodindvec;
   gsl_vector    *frvec;
+  gsl_vector    *frq2vec;
   gsl_matrix    *IRs_pqrcombmatsorted;
   gsl_matrix    *IRs_pqrcountmat;
   gsl_matrix    *alphamatsorted;

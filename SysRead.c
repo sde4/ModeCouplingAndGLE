@@ -29,7 +29,7 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
 
   printf("#    o Input file required: 1. frvec.dat 2. IRs_pqrcombmatsorted.dat\n");
   printf("#                           3. IRs_pqrcountmat.dat 4. alphamatsorted.dat\n");
-  printf("#                           5. Athvec.dat\n");
+  printf("#                           5. Athvec.dat 6. frq2vec.dat\n");
   // check for the required input files
 
   if ((infp=fopen("frvec.dat", "r")) == NULL) 
@@ -53,6 +53,11 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
      exit(1);
   }
   if ((infp=fopen("Athvec.dat", "r")) == NULL) 
+  {
+     printf("#      ERROR: File 5 not found! \n");
+     exit(1);
+  }
+  if ((infp=fopen("frq2vec.dat", "r")) == NULL) 
   {
      printf("#      ERROR: File 5 not found! \n");
      exit(1);
@@ -136,6 +141,13 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   for (i = 0; i < r.nmodes; i++) {
     fscanf(infp, "%lf", &fdat);
     gsl_vector_set(s->frvec, i, fdat);
+  }
+  fclose(infp);
+
+  infp = fopen("frq2vec.dat", "r");
+  for (i = 0; i < r.nmodes; i++) {
+    fscanf(infp, "%lf", &fdat);
+    gsl_vector_set(s->frq2vec, i, fdat);
   }
   fclose(infp);
 
@@ -243,6 +255,22 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     }
     gamavg = gamavg/round(r.nmodecut);
   }
+  if (mc.gam == -2.0){
+    for (j=1; j<=round(pow(r.nmodecut, 0.5)); j++) {
+      for (i=1; i<=round(pow(r.nmodecut, 0.5)); i++) { 
+        mord    = i;
+        nord    = j;
+        ilamhx  = mord/sc.Lx;
+        ilamhy  = nord/sc.Ly;
+        ilamh   = pow((ilamhx*ilamhx + ilamhy*ilamhy)/2.0, 0.5);        // 2/lamh^2 = 1/lamx^2 + 1/lamy^2;
+        lamh    = 1.0/ilamh;
+
+        gam     = 1000.*1E2/pow(10.0, 0.63834*pow(ilamh*1E-6, -0.30952))/2.0;       // intrinsic for MD scale obtained from fitting MD data parameterized for prestrain = 0.001, fitted parameters time-ns, length -Ang, Remember tau_d = 2*tau_e thats why factor 2 in the beginning
+        gamavg  += gam;   		     // intrinsic
+      }
+    }
+    gamavg = gamavg/round(r.nmodecut);
+  }
 
   /**************************/
   // Rest of the initializations !!
@@ -271,7 +299,8 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
       // DissViscElas = mc.DEt*pow(PI,5.0)*pow(Ath, 4.0)*( 9*pow(sc.Ly,4.0)*pow(mord,4.0) + 2*pow(sc.Lx,2.0)*pow(sc.Ly,2.0)*pow(mord,2.0)*pow(nord,2.0) + 9*pow(sc.Lx,4.0)*pow(nord,4.0) )/(256*pow(sc.Lx*sc.Ly,3.0)) * ((2*PI*fri*mc.tausig)/(1 + (2*PI*fri*mc.tausig)*(2*PI*fri*mc.tausig)) );
       // DissOscillator = 1/2.0*PI*m*(2*PI*fri)*pow(Ath, 2.0);
       // gam = DissViscElas/DissOscillator;   				// intrinsic for device scale obtained from constitutive reln
-      gam = 1000./pow(10.0, 0.63834*pow(ilamh*1E-4, -0.30952));         // intrinsic for MD scale obtained from fitting MD data parameterized for prestrain = 0.001, fitted parameters time-ns, length -Ang
+      // gam = 1000.*1E2/pow(10.0, 0.63834*pow(ilamh*1E-6, -0.30952))/2.0;       // intrinsic for MD scale obtained from fitting MD data parameterized for prestrain = 0.001, fitted parameters time-ns, length -Ang, Remember tau_d = 2*tau_e thats why factor 2 in the beginning
+      gam = gamavg;
     }
     else if (mc.gam == 0.0){
       gam = 0.0;   					// zero
@@ -285,7 +314,7 @@ void SysRead(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     gsl_vector_set(s->sigvec, i, sig);
   }
   // Setting gam 0 for initially perturbed mode
-  if (r.pertEval != 0.0 && mc.gam==-1.0 ){
+  if (r.pertEval != 0.0 && (mc.gam==-1.0 ||mc.gam==-2.0) ){
     m 	 = gsl_vector_get(s->mvec, r.pertmodind-1);
     fri  = gsl_vector_get(s->frvec, r.pertmodind-1);
     Ath  = pow(2*r.pertEval/(m * pow(2 * PI * fri, 2.0)), 0.5);

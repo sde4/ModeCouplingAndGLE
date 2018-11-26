@@ -19,6 +19,7 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
   int mord, nord, pord, qord;
   int sind, pind, qind, rind;
   double m, gam, fri, Ath;
+  double frq2, StorViscElas, StorOscillator;
   double sig;
   double N, Nj, R, ilamhx, ilamhy, ilamh, lamh;
   double frj, frk, frl;
@@ -172,6 +173,17 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     Ath     = pow(kB * sv.T / (m * pow(2 * PI * fri, 2.0)), 0.5);
     gsl_vector_set(s->Athvec, i, Ath);
   }
+  for (i = 0; i < r.nmodes; i++) {
+    mord    = gsl_matrix_get(s->modindmat, i, 0);
+    nord    = gsl_matrix_get(s->modindmat, i, 1);
+    fri     = gsl_vector_get(s->frvec, i);
+
+    StorViscElas = mc.DEt*pow(PI,4.0)*( 9*pow(sc.Ly,4.0)*pow(mord,4.0) + 2*pow(sc.Lx,2.0)*pow(sc.Ly,2.0)*pow(mord,2.0)*pow(nord,2.0) + 9*pow(sc.Lx,4.0)*pow(nord,4.0) )/(512*pow(sc.Lx*sc.Ly,3.0)) * (pow(2*PI*fri*mc.tausig,2.0)/(1 + (2*PI*fri*mc.tausig)*(2*PI*fri*mc.tausig)) );
+    StorOscillator = 1/2.0*m;
+    frq2    = pow(StorViscElas/StorOscillator,0.5)/(2*PI);   		     // intrinsic
+    gsl_vector_set(s->frq2vec, i, frq2);
+  }
+
   // File write !!
   // frequency file !!
   outfp = fopen("frvec.dat", "w");
@@ -179,6 +191,13 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
     fprintf(outfp, "%10.10f\n", gsl_vector_get(s->frvec, i));
   }
   fprintf(outfp, "%10.10f", gsl_vector_get(s->frvec, i));
+  fclose(outfp);
+
+  outfp = fopen("frq2vec.dat", "w");
+  for (i = 0; i < r.nmodes - 1; i++) {
+    fprintf(outfp, "%10.10f\n", gsl_vector_get(s->frq2vec, i));
+  }
+  fprintf(outfp, "%10.10f", gsl_vector_get(s->frq2vec, i));
   fclose(outfp);
 
   // Thermal amplitude file !!
@@ -211,6 +230,22 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
         DissViscElas = mc.DEt*pow(PI,5.0)*pow(Ath, 4.0)*( 9*pow(sc.Ly,4.0)*pow(mord,4.0) + 2*pow(sc.Lx,2.0)*pow(sc.Ly,2.0)*pow(mord,2.0)*pow(nord,2.0) + 9*pow(sc.Lx,4.0)*pow(nord,4.0) )/(256*pow(sc.Lx*sc.Ly,3.0)) * ((2*PI*fri*mc.tausig)/(1 + (2*PI*fri*mc.tausig)*(2*PI*fri*mc.tausig)) );
         DissOscillator = 1/2.0*PI*m*(2*PI*fri)*pow(Ath, 2.0);
         gamavg  += DissViscElas/DissOscillator;   		     // intrinsic
+      }
+    }
+    gamavg = gamavg/round(r.nmodecut);
+  }
+  if (mc.gam == -2.0){
+    for (j=1; j<=round(pow(r.nmodecut, 0.5)); j++) {
+      for (i=1; i<=round(pow(r.nmodecut, 0.5)); i++) { 
+        mord    = i;
+        nord    = j;
+        ilamhx  = mord/sc.Lx;
+        ilamhy  = nord/sc.Ly;
+        ilamh   = pow((ilamhx*ilamhx + ilamhy*ilamhy)/2.0, 0.5);        // 2/lamh^2 = 1/lamx^2 + 1/lamy^2;
+        lamh    = 1.0/ilamh;
+
+        gam     = 1000.*1E2/pow(10.0, 0.63834*pow(ilamh*1E-6, -0.30952))/2.0;       // intrinsic for MD scale obtained from fitting MD data parameterized for prestrain = 0.001, fitted parameters time-ns, length -Ang, Remember tau_d = 2*tau_e thats why factor 2 in the beginning
+        gamavg  += gam;   		     // intrinsic
       }
     }
     gamavg = gamavg/round(r.nmodecut);
@@ -262,7 +297,8 @@ void SysInit(sys_var* s, run_param r, mat_const mc, state_var sv, sys_const sc, 
       // DissViscElas = mc.DEt*pow(PI,5.0)*pow(Ath, 4.0)*( 9*pow(sc.Ly,4.0)*pow(mord,4.0) + 2*pow(sc.Lx,2.0)*pow(sc.Ly,2.0)*pow(mord,2.0)*pow(nord,2.0) + 9*pow(sc.Lx,4.0)*pow(nord,4.0) )/(256*pow(sc.Lx*sc.Ly,3.0)) * ((2*PI*fri*mc.tausig)/(1 + (2*PI*fri*mc.tausig)*(2*PI*fri*mc.tausig)) );
       // DissOscillator = 1/2.0*PI*m*(2*PI*fri)*pow(Ath, 2.0);
       // gam = DissViscElas/DissOscillator;   				// intrinsic for device scale obtained from constitutive reln
-      gam = 1000./pow(10.0, 0.63834*pow(ilamh*1E-4, -0.30952));         // intrinsic for MD scale obtained from fitting MD data parameterized for prestrain = 0.001, fitted parameters time-ns, length -Ang
+      // gam = 1000.*1E2/pow(10.0, 0.63834*pow(ilamh*1E-6, -0.30952))/2.0;       // intrinsic for MD scale obtained from fitting MD data parameterized for prestrain = 0.001, fitted parameters time-ns, length -Ang, Remember tau_d = 2*tau_e thats why factor 2 in the beginning
+      gam = gamavg;
     }
     else if (mc.gam == 0.0){
       gam = 0.0;   					// zero

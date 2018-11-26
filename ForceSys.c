@@ -8,13 +8,14 @@ for_var	ForceSys(sys_var s, run_param r, int j)
 {
   int 	sind, pind, qind, rind;
   int 	cou2, lo, hi;
-  double fr;
+  double fr, frq2;
   double q_s, q_p, q_q, q_r;
   double alpha, mult, f3ssss, ep4ssss;
   for_var f;
 
   sind  = (int) gsl_matrix_get(s.IRs_pqrcountmat, j, 0);
   fr 	= gsl_vector_get(s.frvec, sind-1);
+  frq2 	= gsl_vector_get(s.frq2vec, sind-1);
   q_s 	= gsl_vector_get(s.qvec, sind-1);
 
   f.f1 	= -pow(2*PI*fr, 2.0)*q_s;
@@ -22,8 +23,8 @@ for_var	ForceSys(sys_var s, run_param r, int j)
   lo 	= gsl_matrix_get(s.IRs_pqrcountmat, j, 2)- gsl_matrix_get(s.IRs_pqrcountmat, j, 1);
   hi 	= gsl_matrix_get(s.IRs_pqrcountmat, j, 2);
 
-  f.f3 	= 0.0;
-  f.ep4 = 0.0;
+  f.f3 	= -pow(2*PI*frq2, 2.0)*q_s*q_s*q_s;
+  f.ep4 = 0.5*pow(2*PI*frq2, 2.0)*q_s*q_s*q_s*q_s;
   f3ssss = 0.0;
   ep4ssss = 0.0;
   for (cou2=lo; cou2<hi; cou2++)
